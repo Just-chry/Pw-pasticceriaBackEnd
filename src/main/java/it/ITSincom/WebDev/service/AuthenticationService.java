@@ -1,16 +1,17 @@
 package it.ITSincom.WebDev.service;
 
-import it.ITSincom.WebDev.persistence.model.Session;
-import it.ITSincom.WebDev.persistence.repository.SessionRepository;
+
+import it.ITSincom.WebDev.persistence.model.UserSession;
+import it.ITSincom.WebDev.persistence.repository.UserSessionRepository;
 import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.repository.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
+import it.ITSincom.WebDev.service.exception.AuthenticationException;
 import it.ITSincom.WebDev.service.exception.UserCreationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,13 +21,13 @@ public class AuthenticationService {
 
     private final UserRepository utenteRepository;
     private final HashCalculator hashCalculator;
-
+    private final UserSessionRepository userSessionRepository;
 
     @Inject
-    public AuthenticationService(UserRepository utenteRepository, HashCalculator hashCalculator, SessionRepository sessionRepository) {
+    public AuthenticationService(UserRepository utenteRepository, HashCalculator hashCalculator, UserSessionRepository userSessionRepository){
         this.utenteRepository = utenteRepository;
         this.hashCalculator = hashCalculator;
-
+        this.userSessionRepository = userSessionRepository;
     }
 
     @Transactional
@@ -69,5 +70,31 @@ public class AuthenticationService {
         utenteRepository.persist(user);
     }
 
+    @Transactional
+    public String login(LoginRequest request) throws AuthenticationException {
+        if (request == null || request.getEmailOrTelefono() == null || request.getPassword() == null) {
+            throw new AuthenticationException("Email/Telefono e password sono obbligatori.");
+        }
+
+        Optional<User> optionalUser = utenteRepository.findByEmailOrTelefono(request.getEmailOrTelefono());
+        if (optionalUser.isEmpty()) {
+            throw new AuthenticationException("Utente non trovato.");
+        }
+
+        User user = optionalUser.get();
+        String hashedPassword = hashCalculator.calculateHash(request.getPassword());
+        if (!user.getPassword().equals(hashedPassword)) {
+            throw new AuthenticationException("Password errata.");
+        }
+
+        String sessionId = UUID.randomUUID().toString();
+        UserSession userSession = new UserSession();
+        userSession.setSessionId(sessionId);
+        userSession.setUserId(user.getId());
+
+        userSessionRepository.persist(userSession);
+
+        return sessionId;
+    }
 
 }
