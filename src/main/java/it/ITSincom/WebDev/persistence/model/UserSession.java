@@ -1,10 +1,11 @@
 package it.ITSincom.WebDev.persistence.model;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user_session")
-public class UserSession {
+public class UserSession extends PanacheEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

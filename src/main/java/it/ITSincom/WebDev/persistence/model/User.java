@@ -1,11 +1,12 @@
 package it.ITSincom.WebDev.persistence.model;
 
 
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user")
-public class User {
+public class User extends PanacheEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,6 +17,7 @@ public class User {
     private String password;
     private String email;    // Facoltativo
     private String telefono;  // Facoltativo
+    private String role;
 
     // Costruttore vuoto per JPA
     public User() {}
@@ -67,5 +69,13 @@ public class User {
 
     public void setTelefono(String telefono) {
         this.telefono = telefono;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

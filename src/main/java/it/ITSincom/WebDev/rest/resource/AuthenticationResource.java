@@ -40,9 +40,7 @@ public class AuthenticationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response login(LoginRequest request) throws AuthenticationException {
         String sessionId = authenticationService.login(request);
-
         NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
-
         return Response.ok("Login avvenuto con successo").cookie(sessionCookie).build();
     }
 

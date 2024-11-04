@@ -106,5 +106,22 @@ public class AuthenticationService {
         userSessionRepository.delete(optionalSession.get());
     }
 
+    public boolean isAdmin(String sessionId) throws AuthenticationException {
+        UserSession session = findUserSessionBySessionId(sessionId);
+        if (session == null) {
+            throw new AuthenticationException("Sessione non valida");
+        }
+        User user = findUserById(session.getUserId());
+        return "admin".equalsIgnoreCase(user.getRole());
+    }
+
+    private User findUserById(Long userId) {
+        return User.findById(userId);
+    }
+
+    private UserSession findUserSessionBySessionId(String sessionId) {
+        return UserSession.find("sessionId", sessionId).firstResult();
+    }
+
 
 }
