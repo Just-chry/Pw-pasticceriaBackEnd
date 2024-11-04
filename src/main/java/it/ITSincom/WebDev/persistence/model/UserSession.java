@@ -7,9 +7,6 @@ import jakarta.persistence.*;
 @Table(name = "user_session")
 public class UserSession extends PanacheEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Column(name = "session_id", nullable = false, unique = true)
     private String sessionId;

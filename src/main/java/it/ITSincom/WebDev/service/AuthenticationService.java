@@ -115,11 +115,11 @@ public class AuthenticationService {
         return "admin".equalsIgnoreCase(user.getRole());
     }
 
-    private User findUserById(Long userId) {
+    public User findUserById(Long userId) {
         return User.findById(userId);
     }
 
-    private UserSession findUserSessionBySessionId(String sessionId) {
+    public UserSession findUserSessionBySessionId(String sessionId) {
         return UserSession.find("sessionId", sessionId).firstResult();
     }
 

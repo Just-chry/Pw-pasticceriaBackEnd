@@ -12,11 +12,11 @@ import jakarta.ws.rs.core.Response;
 import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.service.AuthenticationService;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 
 @Path("/auth")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 public class AuthenticationResource {
 
     private final AuthenticationService authenticationService;
@@ -27,8 +27,6 @@ public class AuthenticationResource {
 
     @POST
     @Path("/register")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response register(CreateUserRequest request) throws UserCreationException {
         authenticationService.register(request);
         return Response.ok("Registrazione completata con successo").build();
@@ -36,8 +34,6 @@ public class AuthenticationResource {
 
     @POST
     @Path("/login")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response login(LoginRequest request) throws AuthenticationException {
         String sessionId = authenticationService.login(request);
         NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
@@ -46,7 +42,6 @@ public class AuthenticationResource {
 
     @DELETE
     @Path("/logout")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response logout(@CookieParam("sessionId") String sessionId) {
         if (sessionId == null || sessionId.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Sessione non trovata o non valida.").build();
