@@ -2,17 +2,17 @@ package it.ITSincom.WebDev.service;
 
 
 import it.ITSincom.WebDev.persistence.model.UserSession;
-import it.ITSincom.WebDev.persistence.repository.UserSessionRepository;
+import it.ITSincom.WebDev.persistence.UserSessionRepository;
 import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.persistence.model.User;
-import it.ITSincom.WebDev.persistence.repository.UserRepository;
+import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
 import it.ITSincom.WebDev.service.exception.AuthenticationException;
 import it.ITSincom.WebDev.service.exception.UserCreationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -96,5 +96,15 @@ public class AuthenticationService {
 
         return sessionId;
     }
+
+    @Transactional
+    public void logout(String sessionId) throws AuthenticationException {
+        Optional<UserSession> optionalSession = userSessionRepository.findBySessionId(sessionId);
+        if (optionalSession.isEmpty()) {
+            throw new AuthenticationException("Sessione non valida.");
+        }
+        userSessionRepository.delete(optionalSession.get());
+    }
+
 
 }

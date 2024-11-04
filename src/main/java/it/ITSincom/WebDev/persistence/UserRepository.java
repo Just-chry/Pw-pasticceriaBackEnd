@@ -1,4 +1,4 @@
-package it.ITSincom.WebDev.persistence.repository;
+package it.ITSincom.WebDev.persistence;
 
 import it.ITSincom.WebDev.persistence.model.User;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
