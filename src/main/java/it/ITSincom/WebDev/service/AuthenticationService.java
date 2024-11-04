@@ -20,13 +20,13 @@ public class AuthenticationService {
 
     private final UserRepository utenteRepository;
     private final HashCalculator hashCalculator;
-    private final SessionRepository sessionRepository;
+
 
     @Inject
     public AuthenticationService(UserRepository utenteRepository, HashCalculator hashCalculator, SessionRepository sessionRepository) {
         this.utenteRepository = utenteRepository;
         this.hashCalculator = hashCalculator;
-        this.sessionRepository = sessionRepository;
+
     }
 
     @Transactional
