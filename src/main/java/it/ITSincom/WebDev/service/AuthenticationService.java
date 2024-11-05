@@ -12,6 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,6 +29,7 @@ public class AuthenticationService {
         this.hashCalculator = hashCalculator;
         this.userSessionRepository = userSessionRepository;
     }
+
     @Transactional
     public User register(CreateUserRequest request) throws UserCreationException {
         if (request == null) {
@@ -66,12 +68,18 @@ public class AuthenticationService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
 
-        String verificationToken = UUID.randomUUID().toString();
-        user.setVerificationToken(verificationToken);
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            String verificationToken = UUID.randomUUID().toString();
+            user.setVerificationTokenEmail(verificationToken);
+        } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            String otp = generateOtp();
+            user.setVerificationTokenPhone(otp);
+        }
 
         userRepository.persist(user);
         return user;
     }
+
 
     @Transactional
     public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
@@ -137,5 +145,14 @@ public class AuthenticationService {
 
     public Optional<User> findUserByEmail(String email) {
         return userRepository.find("email", email).firstResultOptional();
+    }
+
+    public Optional<User> findUserByPhone(String contact) {
+        return userRepository.find("phone", contact).firstResultOptional();
+    }
+    public String generateOtp() {
+        SecureRandom random = new SecureRandom();
+        int otp = 100000 + random.nextInt(900000);
+        return String.valueOf(otp);
     }
 }

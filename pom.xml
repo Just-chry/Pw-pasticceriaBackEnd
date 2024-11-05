@@ -77,9 +77,12 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-mailer</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>8.35.0</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

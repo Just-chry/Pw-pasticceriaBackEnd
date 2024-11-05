@@ -16,8 +16,10 @@ public class User {
     private String surname;
     private String phone;
     private Boolean emailVerified = false;
+    private Boolean phoneVerified = false; // Nuovo campo per gestire la verifica del telefono
     private String role = "user";
-    private String verificationToken;
+    private String verificationTokenEmail; // Nuovo campo per il token di verifica email
+    private String verificationTokenPhone; // Nuovo campo per il token di verifica telefono
 
     // Costruttore vuoto per JPA
     public User() {}
@@ -79,6 +81,14 @@ public class User {
         this.emailVerified = emailVerified;
     }
 
+    public Boolean getPhoneVerified() {
+        return phoneVerified;
+    }
+
+    public void setPhoneVerified(Boolean phoneVerified) {
+        this.phoneVerified = phoneVerified;
+    }
+
     public String getRole() {
         return role;
     }
@@ -87,11 +97,19 @@ public class User {
         this.role = role;
     }
 
-    public String getVerificationToken() {
-        return verificationToken;
+    public String getVerificationTokenEmail() {
+        return verificationTokenEmail;
     }
 
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
+    public void setVerificationTokenEmail(String verificationTokenEmail) {
+        this.verificationTokenEmail = verificationTokenEmail;
+    }
+
+    public String getVerificationTokenPhone() {
+        return verificationTokenPhone;
+    }
+
+    public void setVerificationTokenPhone(String verificationTokenPhone) {
+        this.verificationTokenPhone = verificationTokenPhone;
     }
 }

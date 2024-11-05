@@ -4,6 +4,7 @@ import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
 import it.ITSincom.WebDev.rest.model.LoginResponse;
 import it.ITSincom.WebDev.service.ProfileService;
+import it.ITSincom.WebDev.service.SmsService;
 import it.ITSincom.WebDev.service.exception.*;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -28,12 +29,14 @@ public class AuthenticationResource {
     private final AuthenticationService authenticationService;
     private final ProfileService profileService;
     private final Mailer mailer;
+    private final SmsService smsService;
 
     @Inject
-    public AuthenticationResource(AuthenticationService authenticationService, ProfileService profileService, Mailer mailer) {
+    public AuthenticationResource(AuthenticationService authenticationService, ProfileService profileService, Mailer mailer, SmsService smsService) {
         this.authenticationService = authenticationService;
         this.profileService = profileService;
         this.mailer = mailer;
+        this.smsService = smsService;
     }
 
     @POST
@@ -41,22 +44,35 @@ public class AuthenticationResource {
     public Response register(CreateUserRequest request) throws UserCreationException {
         User user = authenticationService.register(request);
 
-        String verificationLink = "http://localhost:8080/auth/verify?token=" + user.getVerificationToken() + "&email=" + user.getEmail();
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            String verificationLink = "http://localhost:8080/auth/verify?token=" + user.getVerificationTokenEmail() + "&contact=" + user.getEmail();
 
-        mailer.send(Mail.withHtml(user.getEmail(),
-                "Conferma la tua registrazione",
-                "<h1>Benvenuto " + user.getName() + " " + user.getSurname() + "!</h1>" +
-                        "<p>Per favore, clicca sul link seguente per verificare il tuo indirizzo email:</p>" +
-                        "<a href=\"" + verificationLink + "\">Verifica la tua email</a>"));
+            mailer.send(Mail.withHtml(user.getEmail(),
+                    "Conferma la tua registrazione",
+                    "<h1>Benvenuto " + user.getName() + " " + user.getSurname() + "!</h1>" +
+                            "<p>Per favore, clicca sul link seguente per verificare il tuo indirizzo email:</p>" +
+                            "<a href=\"" + verificationLink + "\">Verifica la tua email</a>"));
+        } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            String otp = user.getVerificationTokenPhone();
+            try {
+                smsService.sendSms(user.getPhone(), "Il tuo codice OTP è: " + otp);
+            } catch (SmsSendingException e) {
+                throw new UserCreationException("Errore durante l'invio dell'OTP: " + e.getMessage());
+            }
+        }
 
-        return Response.ok("Registrazione completata con successo, controlla la tua email per confermare.").build();
+        return Response.ok("Registrazione completata con successo, controlla il tuo contatto per confermare.").build();
     }
 
     @GET
     @Path("/verify")
-    public Response verifyEmail(@QueryParam("token") String token, @QueryParam("email") String email) {
-        // Cerca l'utente nel database tramite l'email
-        Optional<User> optionalUser = authenticationService.findUserByEmail(email);
+    public Response verify(@QueryParam("token") String token, @QueryParam("contact") String contact) {
+        Optional<User> optionalUser;
+        if (contact.contains("@")) {
+            optionalUser = authenticationService.findUserByEmail(contact);
+        } else {
+            optionalUser = authenticationService.findUserByPhone(contact);
+        }
 
         if (optionalUser.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Utente non trovato.").build();
@@ -64,16 +80,27 @@ public class AuthenticationResource {
 
         User user = optionalUser.get();
 
-        if (user.getVerificationToken() == null || !user.getVerificationToken().equals(token)) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+        if (contact.contains("@")) {
+            if (user.getVerificationTokenEmail() == null || !user.getVerificationTokenEmail().equals(token)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+            }
+            user.setEmailVerified(true);
+            user.setVerificationTokenEmail(null);
+        } else {
+            if (user.getVerificationTokenPhone() == null || !user.getVerificationTokenPhone().equals(token)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+            }
+            user.setPhoneVerified(true);
+            user.setVerificationTokenPhone(null);
         }
 
-        user.setEmailVerified(true);
-        user.setVerificationToken(null);
         profileService.updateUser(user);
 
-        return Response.ok("Email verificata con successo! Ora puoi accedere.").build();
+        return Response.ok("Contatto verificato con successo! Ora puoi accedere.").build();
     }
+
+
+
 
     @POST
     @Path("/login")
@@ -82,9 +109,9 @@ public class AuthenticationResource {
         Optional<User> optionalUser = authenticationService.findUserByEmailOrPhone(request.getEmailOrPhone());
         User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
-        // 2. Verifica se l'utente ha confermato l'email
+        // 2. Verifica se almeno uno dei contatti è stato verificato
         if (!user.getEmailVerified()) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Email non verificata. Per favore, verifica il tuo indirizzo email.").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Contatto non verificato. Per favore, verifica il tuo indirizzo email o il tuo numero di telefono.").build();
         }
 
         // 3. Procede con il login
@@ -94,7 +121,6 @@ public class AuthenticationResource {
 
         return Response.ok(response).cookie(sessionCookie).build();
     }
-
 
 
 

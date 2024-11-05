@@ -1,5 +1,7 @@
 package it.ITSincom.WebDev.rest.resource;
 
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.Mailer;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.rest.model.ModifyRequest;
@@ -12,6 +14,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.UUID;
+
 @Path("/profile")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -19,11 +23,13 @@ public class ProfileResource {
 
     private final AuthenticationService authenticationService;
     private final ProfileService profileService;
+    private final Mailer mailer;
 
     @Inject
-    public ProfileResource(AuthenticationService authenticationService, ProfileService profileService) {
+    public ProfileResource(AuthenticationService authenticationService, ProfileService profileService, Mailer mailer) {
         this.authenticationService = authenticationService;
         this.profileService = profileService;
+        this.mailer = mailer;
     }
 
 
@@ -42,10 +48,25 @@ public class ProfileResource {
             if (userSession == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
             }
+
             User user = authenticationService.findUserById(userSession.getUserId());
             if (request.getEmail() != null) {
                 user.setEmail(request.getEmail());
+                user.setEmailVerified(false);
+
+                // Genera un nuovo token di verifica
+                String verificationTokenEmail = UUID.randomUUID().toString();
+                user.setVerificationTokenEmail(verificationTokenEmail);
+
+                // Invia email di verifica
+                String verificationLink = "http://localhost:8080/auth/verify?token=" + verificationTokenEmail + "&contact=" + user.getEmail();
+                mailer.send(Mail.withHtml(user.getEmail(),
+                        "Conferma la tua email",
+                        "<h1>Ciao " + user.getName() + "!</h1>" +
+                                "<p>Per favore, clicca sul link seguente per verificare il tuo nuovo indirizzo email:</p>" +
+                                "<a href=\"" + verificationLink + "\">Verifica la tua email</a>"));
             }
+
             User updatedUser = profileService.updateUser(user);
             UserResponse response = new UserResponse(updatedUser.getName(), updatedUser.getSurname(), updatedUser.getEmail(), updatedUser.getPhone());
             return Response.ok(response).build();
@@ -53,6 +74,7 @@ public class ProfileResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+
 
     @PUT
     @Path("/modify/telefono")
