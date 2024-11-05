@@ -47,7 +47,7 @@ public class AuthenticationService {
             emailInUse = userRepository.findByEmail(request.getEmail()).isPresent();
         }
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
-            telefonoInUse = userRepository.findByTelefono(request.getPhone()).isPresent();
+            telefonoInUse = userRepository.findByPhone(request.getPhone()).isPresent();
         }
 
         if (emailInUse && telefonoInUse) {
@@ -79,7 +79,7 @@ public class AuthenticationService {
             throw new IllegalArgumentException("Email/Telefono e password sono obbligatori.");
         }
 
-        Optional<User> optionalUser = userRepository.findByEmailOrTelefono(request.getEmailOrPhone());
+        Optional<User> optionalUser = userRepository.findUserByEmailOrPhone(request.getEmailOrPhone());
         if (optionalUser.isEmpty()) {
             throw new UserNotFoundException("Utente non trovato.");
         }
@@ -131,8 +131,8 @@ public class AuthenticationService {
         return userSessionRepository.findBySessionId(sessionId).orElse(null);
     }
 
-    public Optional<User> findUserByEmailOrTelefono(String emailOrTelefono) {
-        return userRepository.findByEmailOrTelefono(emailOrTelefono);
+    public Optional<User> findUserByEmailOrPhone(String emailOrTelefono) {
+        return userRepository.findUserByEmailOrPhone(emailOrTelefono);
     }
 
     public Optional<User> findUserByEmail(String email) {

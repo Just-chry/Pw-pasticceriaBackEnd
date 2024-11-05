@@ -52,38 +52,6 @@ public class AuthenticationResource {
         return Response.ok("Registrazione completata con successo, controlla la tua email per confermare.").build();
     }
 
-
-
-    @POST
-    @Path("/login")
-    public Response login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
-        Optional<User> optionalUser = authenticationService.findUserByEmailOrTelefono(request.getEmailOrPhone());
-        User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
-
-        if (!user.getEmailVerified()) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Email non verificata. Per favore, verifica il tuo indirizzo email.").build();
-        }
-
-        String sessionId = authenticationService.login(request);
-        LoginResponse response = new LoginResponse("Login avvenuto con successo", user.getName());
-        NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
-
-        return Response.ok(response).cookie(sessionCookie).build();
-    }
-
-
-    @DELETE
-    @Path("/logout")
-    public Response logout(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
-        if (sessionId == null || sessionId.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Sessione non trovata o non valida.").build();
-        }
-
-        authenticationService.logout(sessionId);
-        NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", 0, false);
-        return Response.ok("Logout avvenuto con successo").cookie(expiredCookie).build();
-    }
-
     @GET
     @Path("/verify")
     public Response verifyEmail(@QueryParam("token") String token, @QueryParam("email") String email) {
@@ -106,6 +74,43 @@ public class AuthenticationResource {
 
         return Response.ok("Email verificata con successo! Ora puoi accedere.").build();
     }
+
+    @POST
+    @Path("/login")
+    public Response login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
+        // 1. Cerca l'utente nel database tramite email o telefono
+        Optional<User> optionalUser = authenticationService.findUserByEmailOrPhone(request.getEmailOrPhone());
+        User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
+
+        // 2. Verifica se l'utente ha confermato l'email
+        if (!user.getEmailVerified()) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Email non verificata. Per favore, verifica il tuo indirizzo email.").build();
+        }
+
+        // 3. Procede con il login
+        String sessionId = authenticationService.login(request);
+        LoginResponse response = new LoginResponse("Login avvenuto con successo", user.getName());
+        NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
+
+        return Response.ok(response).cookie(sessionCookie).build();
+    }
+
+
+
+
+    @DELETE
+    @Path("/logout")
+    public Response logout(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Sessione non trovata o non valida.").build();
+        }
+
+        authenticationService.logout(sessionId);
+        NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", 0, false);
+        return Response.ok("Logout avvenuto con successo").cookie(expiredCookie).build();
+    }
+
+
 
 
     @GET
