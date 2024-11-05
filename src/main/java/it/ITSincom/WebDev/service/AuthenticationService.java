@@ -18,13 +18,13 @@ import java.util.UUID;
 @ApplicationScoped
 public class AuthenticationService {
 
-    private final UserRepository utenteRepository;
+    private final UserRepository userRepository;
     private final HashCalculator hashCalculator;
     private final UserSessionRepository userSessionRepository;
 
     @Inject
-    public AuthenticationService(UserRepository utenteRepository, HashCalculator hashCalculator, UserSessionRepository userSessionRepository){
-        this.utenteRepository = utenteRepository;
+    public AuthenticationService(UserRepository userRepository, HashCalculator hashCalculator, UserSessionRepository userSessionRepository) {
+        this.userRepository = userRepository;
         this.hashCalculator = hashCalculator;
         this.userSessionRepository = userSessionRepository;
     }
@@ -40,42 +40,43 @@ public class AuthenticationService {
         if (!request.hasValidContact()) {
             throw new UserCreationException("È necessario inserire almeno un'email o un numero di telefono.");
         }
+
+        boolean emailInUse = false;
+        boolean telefonoInUse = false;
+
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            Optional<User> existingUserByEmail = utenteRepository.findByEmail(request.getEmail());
-            if (existingUserByEmail.isPresent()) {
-                throw new UserCreationException("L'email è già in uso.");
-            }
+            emailInUse = userRepository.findByEmail(request.getEmail()).isPresent();
         }
-        if (request.getTelefono() != null && !request.getTelefono().isBlank()) {
-            Optional<User> existingUserByTelefono = utenteRepository.findByTelefono(request.getTelefono());
-            if (existingUserByTelefono.isPresent()) {
-                throw new UserCreationException("Il numero di telefono è già in uso.");
-            }
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            telefonoInUse = userRepository.findByTelefono(request.getPhone()).isPresent();
         }
 
-        if (request.getTelefono() != null) {
-            Optional<User> existingUserByTelefono = utenteRepository.findByTelefono(request.getTelefono());
-            if (existingUserByTelefono.isPresent()) {
-                throw new UserCreationException("Il numero di telefono è già in uso.");
-            }
+        if (emailInUse && telefonoInUse) {
+            throw new UserCreationException("Sia l'email che il numero di telefono sono già in uso.");
+        } else if (emailInUse) {
+            throw new UserCreationException("L'email è già in uso.");
+        } else if (telefonoInUse) {
+            throw new UserCreationException("Il numero di telefono è già in uso.");
         }
+
         String hashedPassword = hashCalculator.calculateHash(request.getPassword());
         User user = new User();
-        user.setNome(request.getNome());
-        user.setCognome(request.getCognome());
+        user.setName(request.getName());
+        user.setSurname(request.getSurname());
         user.setPassword(hashedPassword);
         user.setEmail(request.getEmail());
-        user.setTelefono(request.getTelefono());
-        utenteRepository.persist(user);
+        user.setPhone(request.getPhone());
+
+        userRepository.persist(user);
     }
 
     @Transactional
     public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
-        if (request == null || request.getEmailOrTelefono() == null || request.getPassword() == null) {
+        if (request == null || request.getEmailOrPhone() == null || request.getPassword() == null) {
             throw new IllegalArgumentException("Email/Telefono e password sono obbligatori.");
         }
 
-        Optional<User> optionalUser = utenteRepository.findByEmailOrTelefono(request.getEmailOrTelefono());
+        Optional<User> optionalUser = userRepository.findByEmailOrTelefono(request.getEmailOrPhone());
         if (optionalUser.isEmpty()) {
             throw new UserNotFoundException("Utente non trovato.");
         }
@@ -120,15 +121,15 @@ public class AuthenticationService {
     }
 
     public User findUserById(Long userId) {
-        return User.findById(userId);
+        return userRepository.findById(userId);
     }
 
     public UserSession findUserSessionBySessionId(String sessionId) {
-        return UserSession.find("sessionId", sessionId).firstResult();
+        return userSessionRepository.findBySessionId(sessionId).orElse(null);
     }
 
     public Optional<User> findUserByEmailOrTelefono(String emailOrTelefono) {
-        return utenteRepository.findByEmailOrTelefono(emailOrTelefono);
+        return userRepository.findByEmailOrTelefono(emailOrTelefono);
     }
 
 }

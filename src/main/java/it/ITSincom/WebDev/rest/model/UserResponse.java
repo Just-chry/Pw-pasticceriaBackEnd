@@ -1,32 +1,32 @@
 package it.ITSincom.WebDev.rest.model;
 
 public class UserResponse {
-    private String nome;
-    private String cognome;
+    private String name;
+    private String surname;
     private String email;
-    private String telefono;
+    private String phone;
 
     public UserResponse(String nome, String cognome, String email, String telefono) {
-        this.nome = nome;
-        this.cognome = cognome;
+        this.name = nome;
+        this.surname = cognome;
         this.email = email;
-        this.telefono = telefono;
+        this.phone = telefono;
     }
 
-    public String getNome() {
-        return nome;
+    public String getName() {
+        return name;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getCognome() {
-        return cognome;
+    public String getSurname() {
+        return surname;
     }
 
-    public void setCognome(String cognome) {
-        this.cognome = cognome;
+    public void setSurname(String surname) {
+        this.surname = surname;
     }
 
     public String getEmail() {
@@ -37,11 +37,11 @@ public class UserResponse {
         this.email = email;
     }
 
-    public String getTelefono() {
-        return telefono;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }

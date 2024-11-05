@@ -1,25 +1,25 @@
 package it.ITSincom.WebDev.persistence.model;
 
-
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user")
-public class User extends PanacheEntity {
+public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private String nome;
-    private String cognome;
+    private String email;
     private String password;
-    private String email;    // Facoltativo
-    private String telefono;  // Facoltativo
-    private String role;
+    private String name;
+    private String surname;
+    private String phone;
+    private Boolean emailVerified = false;
+    private String role = "user";
 
     // Costruttore vuoto per JPA
-    public User() {
-        this.role = "user";
-    }
+    public User() {}
 
     // Getter e Setter
     public Long getId() {
@@ -30,20 +30,12 @@ public class User extends PanacheEntity {
         this.id = id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getEmail() {
+        return email;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getCognome() {
-        return cognome;
-    }
-
-    public void setCognome(String cognome) {
-        this.cognome = cognome;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -54,20 +46,36 @@ public class User extends PanacheEntity {
         this.password = password;
     }
 
-    public String getEmail() {
-        return email;
+    public String getName() {
+        return name;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getTelefono() {
-        return telefono;
+    public String getSurname() {
+        return surname;
     }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
+    public void setSurname(String surname) {
+        this.surname = surname;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     public String getRole() {

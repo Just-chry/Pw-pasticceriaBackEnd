@@ -2,11 +2,11 @@ package it.ITSincom.WebDev.rest.model;
 
 public class LoginResponse {
     private String message;
-    private String nome;
+    private String name;
 
     public LoginResponse(String message, String nome) {
         this.message = message;
-        this.nome = nome;
+        this.name = nome;
     }
 
     // Getter e Setter
@@ -18,11 +18,11 @@ public class LoginResponse {
         this.message = message;
     }
 
-    public String getNome() {
-        return nome;
+    public String getName() {
+        return name;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setName(String name) {
+        this.name = name;
     }
 }

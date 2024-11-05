@@ -1,15 +1,15 @@
 package it.ITSincom.WebDev.rest.model;
 
 public class LoginRequest {
-    private String emailOrTelefono;
+    private String emailOrPhone;
     private String password;
 
-    public String getEmailOrTelefono() {
-        return emailOrTelefono;
+    public String getEmailOrPhone() {
+        return emailOrPhone;
     }
 
-    public void setEmailOrTelefono(String emailOrTelefono) {
-        this.emailOrTelefono = emailOrTelefono;
+    public void setEmailOrPhone(String emailOrPhone) {
+        this.emailOrPhone = emailOrPhone;
     }
 
     public String getPassword() {

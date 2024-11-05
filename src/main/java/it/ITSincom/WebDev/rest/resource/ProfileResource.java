@@ -47,7 +47,7 @@ public class ProfileResource {
                 user.setEmail(request.getEmail());
             }
             User updatedUser = profileService.updateUser(user);
-            UserResponse response = new UserResponse(updatedUser.getNome(), updatedUser.getCognome(), updatedUser.getEmail(), updatedUser.getTelefono());
+            UserResponse response = new UserResponse(updatedUser.getName(), updatedUser.getSurname(), updatedUser.getEmail(), updatedUser.getPhone());
             return Response.ok(response).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -64,11 +64,11 @@ public class ProfileResource {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
             }
             User user = authenticationService.findUserById(userSession.getUserId());
-            if (request.getTelefono() != null) {
-                user.setTelefono(request.getTelefono());
+            if (request.getPhone() != null) {
+                user.setPhone(request.getPhone());
             }
             User updatedUser = profileService.updateUser(user);
-            UserResponse response = new UserResponse(updatedUser.getNome(), updatedUser.getCognome(), updatedUser.getEmail(), updatedUser.getTelefono());
+            UserResponse response = new UserResponse(updatedUser.getName(), updatedUser.getSurname(), updatedUser.getEmail(), updatedUser.getPhone());
             return Response.ok(response).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();

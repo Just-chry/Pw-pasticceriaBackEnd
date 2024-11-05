@@ -3,7 +3,7 @@ package it.ITSincom.WebDev.rest.model;
 public class ModifyRequest {
     private String email;
     private String password;
-    private String telefono;
+    private String phone;
 
     public String getEmail() {
         return email;
@@ -21,12 +21,12 @@ public class ModifyRequest {
         this.password = password;
     }
 
-    public String getTelefono() {
-        return telefono;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
 }

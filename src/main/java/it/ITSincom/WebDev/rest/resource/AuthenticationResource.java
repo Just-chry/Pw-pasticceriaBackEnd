@@ -37,10 +37,10 @@ public class AuthenticationResource {
     @Path("/login")
     public Response login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
         String sessionId = authenticationService.login(request);
-        Optional<User> optionalUser = authenticationService.findUserByEmailOrTelefono(request.getEmailOrTelefono());
+        Optional<User> optionalUser = authenticationService.findUserByEmailOrTelefono(request.getEmailOrPhone());
         User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
-        LoginResponse response = new LoginResponse("Login avvenuto con successo", user.getNome());
+        LoginResponse response = new LoginResponse("Login avvenuto con successo", user.getName());
         NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
 
         return Response.ok(response).cookie(sessionCookie).build();

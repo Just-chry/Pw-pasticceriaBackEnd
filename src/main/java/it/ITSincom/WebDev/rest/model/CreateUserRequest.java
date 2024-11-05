@@ -1,23 +1,23 @@
 package it.ITSincom.WebDev.rest.model;
 
 public class CreateUserRequest {
-    private String nome;
-    private String cognome;
+    private String name;
+    private String surname;
     private String password;
     private String email;
-    private String telefono;
+    private String phone;
 
-    public String getNome() {
-        return nome;
+    public String getName() {
+        return name;
     }
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setName(String name) {
+        this.name = name;
     }
-    public String getCognome() {
-        return cognome;
+    public String getSurname() {
+        return surname;
     }
-    public void setCognome(String cognome) {
-        this.cognome = cognome;
+    public void setSurname(String surname) {
+        this.surname = surname;
     }
     public String getPassword() {
         return password;
@@ -31,21 +31,21 @@ public class CreateUserRequest {
     public void setEmail(String email) {
         this.email = email;
     }
-    public String getTelefono() {
-        return telefono;
+    public String getPhone() {
+        return phone;
     }
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public boolean hasValidNameAndSurname() {
-        return nome != null && !nome.trim().isEmpty() &&
-                cognome != null && !cognome.trim().isEmpty();
+        return name != null && !name.trim().isEmpty() &&
+                surname != null && !surname.trim().isEmpty();
     }
 
     public boolean hasValidContact() {
         return (email != null && !email.trim().isEmpty()) ||
-                (telefono != null && !telefono.trim().isEmpty());
+                (phone != null && !phone.trim().isEmpty());
     }
 
 
