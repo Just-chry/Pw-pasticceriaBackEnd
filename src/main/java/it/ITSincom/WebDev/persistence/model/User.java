@@ -17,7 +17,9 @@ public class User extends PanacheEntity {
     private String role;
 
     // Costruttore vuoto per JPA
-    public User() {}
+    public User() {
+        this.role = "user";
+    }
 
     // Getter e Setter
     public Long getId() {

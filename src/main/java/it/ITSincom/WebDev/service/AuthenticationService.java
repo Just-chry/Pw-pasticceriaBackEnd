@@ -7,8 +7,7 @@ import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
-import it.ITSincom.WebDev.service.exception.AuthenticationException;
-import it.ITSincom.WebDev.service.exception.UserCreationException;
+import it.ITSincom.WebDev.service.exception.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -71,20 +70,25 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public String login(LoginRequest request) throws AuthenticationException {
+    public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
         if (request == null || request.getEmailOrTelefono() == null || request.getPassword() == null) {
-            throw new AuthenticationException("Email/Telefono e password sono obbligatori.");
+            throw new IllegalArgumentException("Email/Telefono e password sono obbligatori.");
         }
 
         Optional<User> optionalUser = utenteRepository.findByEmailOrTelefono(request.getEmailOrTelefono());
         if (optionalUser.isEmpty()) {
-            throw new AuthenticationException("Utente non trovato.");
+            throw new UserNotFoundException("Utente non trovato.");
         }
 
         User user = optionalUser.get();
         String hashedPassword = hashCalculator.calculateHash(request.getPassword());
         if (!user.getPassword().equals(hashedPassword)) {
-            throw new AuthenticationException("Password errata.");
+            throw new WrongPasswordException("Password errata.");
+        }
+
+        Optional<UserSession> existingSession = userSessionRepository.findByUserId(user.getId());
+        if (existingSession.isPresent()) {
+            throw new SessionAlreadyExistsException("Utente ha già una sessione attiva.");
         }
 
         String sessionId = UUID.randomUUID().toString();
@@ -98,18 +102,18 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public void logout(String sessionId) throws AuthenticationException {
+    public void logout(String sessionId) throws UserSessionNotFoundException {
         Optional<UserSession> optionalSession = userSessionRepository.findBySessionId(sessionId);
         if (optionalSession.isEmpty()) {
-            throw new AuthenticationException("Sessione non valida.");
+            throw new UserSessionNotFoundException("Sessione non valida.");
         }
         userSessionRepository.delete(optionalSession.get());
     }
 
-    public boolean isAdmin(String sessionId) throws AuthenticationException {
+    public boolean isAdmin(String sessionId) throws UserSessionNotFoundException {
         UserSession session = findUserSessionBySessionId(sessionId);
         if (session == null) {
-            throw new AuthenticationException("Sessione non valida");
+            throw new UserSessionNotFoundException("Sessione non valida");
         }
         User user = findUserById(session.getUserId());
         return "admin".equalsIgnoreCase(user.getRole());
@@ -123,5 +127,8 @@ public class AuthenticationService {
         return UserSession.find("sessionId", sessionId).firstResult();
     }
 
+    public Optional<User> findUserByEmailOrTelefono(String emailOrTelefono) {
+        return utenteRepository.findByEmailOrTelefono(emailOrTelefono);
+    }
 
 }
