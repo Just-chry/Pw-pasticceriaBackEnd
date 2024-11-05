@@ -28,9 +28,8 @@ public class AuthenticationService {
         this.hashCalculator = hashCalculator;
         this.userSessionRepository = userSessionRepository;
     }
-
     @Transactional
-    public void register(CreateUserRequest request) throws UserCreationException {
+    public User register(CreateUserRequest request) throws UserCreationException {
         if (request == null) {
             throw new UserCreationException("La richiesta non può essere vuota. Nome, cognome, password e almeno un contatto sono obbligatori.");
         }
@@ -67,7 +66,11 @@ public class AuthenticationService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
 
+        String verificationToken = UUID.randomUUID().toString();
+        user.setVerificationToken(verificationToken);
+
         userRepository.persist(user);
+        return user;
     }
 
     @Transactional
@@ -132,4 +135,7 @@ public class AuthenticationService {
         return userRepository.findByEmailOrTelefono(emailOrTelefono);
     }
 
+    public Optional<User> findUserByEmail(String email) {
+        return userRepository.find("email", email).firstResultOptional();
+    }
 }

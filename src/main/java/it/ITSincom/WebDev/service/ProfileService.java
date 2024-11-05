@@ -20,11 +20,7 @@ public class ProfileService {
 
     @Transactional
     public User updateUser(User user) {
-        if (userRepository.isPersistent(user)) {
-            userRepository.getEntityManager().merge(user);
-        } else {
-            userRepository.persist(user);
-        }
-        return user;
+        return userRepository.getEntityManager().merge(user);
     }
+
 }

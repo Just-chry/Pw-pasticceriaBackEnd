@@ -17,6 +17,7 @@ public class User {
     private String phone;
     private Boolean emailVerified = false;
     private String role = "user";
+    private String verificationToken;
 
     // Costruttore vuoto per JPA
     public User() {}
@@ -84,5 +85,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
     }
 }
