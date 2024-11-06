@@ -34,33 +34,33 @@ public class ProfileResource {
         this.mailer = mailer;
     }
 
-
-    private void validateSessionId(String sessionId) {
+    private User validateUserSession(String sessionId) {
         if (sessionId == null || sessionId.isEmpty()) {
             throw new EntityNotFoundException("Sessione non trovata.");
         }
+        UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
+        if (userSession == null) {
+            throw new EntityNotFoundException("Sessione non valida.");
+        }
+        User user = authenticationService.findUserById(userSession.getUserId());
+        if (user == null) {
+            throw new EntityNotFoundException("Utente non trovato.");
+        }
+        return user;
     }
 
     @PUT
     @Path("/modify/email")
     public Response modifyEmail(ModifyRequest request, @CookieParam("sessionId") String sessionId) {
         try {
-            validateSessionId(sessionId);
-            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
-            if (userSession == null) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-
-            User user = authenticationService.findUserById(userSession.getUserId());
+            User user = validateUserSession(sessionId);
             if (request.getEmail() != null) {
                 user.setEmail(request.getEmail());
                 user.setEmailVerified(false);
 
-                // Genera un nuovo token di verifica
                 String verificationTokenEmail = UUID.randomUUID().toString();
                 user.setVerificationTokenEmail(verificationTokenEmail);
 
-                // Invia email di verifica
                 String verificationLink = "http://localhost:8080/auth/verify?token=" + verificationTokenEmail + "&contact=" + user.getEmail();
                 mailer.send(Mail.withHtml(user.getEmail(),
                         "Conferma la tua email",
@@ -82,12 +82,7 @@ public class ProfileResource {
     @Path("/modify/telefono")
     public Response modifyTelefono(ModifyRequest request, @CookieParam("sessionId") String sessionId) {
         try {
-            validateSessionId(sessionId);
-            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
-            if (userSession == null) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-            User user = authenticationService.findUserById(userSession.getUserId());
+            User user = validateUserSession(sessionId);
             if (request.getPhone() != null) {
                 user.setPhone(request.getPhone());
             }

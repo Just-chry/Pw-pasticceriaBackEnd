@@ -128,7 +128,10 @@ public class AuthenticationService {
             throw new UserSessionNotFoundException("Sessione non valida");
         }
         User user = findUserById(session.getUserId());
-        return "admin".equalsIgnoreCase(user.getRole());
+        if (!"admin".equalsIgnoreCase(user.getRole())) {
+            throw new UserSessionNotFoundException("Accesso non autorizzato: l'utente non è un amministratore");
+        }
+        return true;
     }
 
     public User findUserById(Long userId) {
@@ -163,5 +166,6 @@ public class AuthenticationService {
     public boolean verifyPassword(String actualPassword, String providedPassword) {
         return actualPassword != null && actualPassword.equals(providedPassword);
     }
+
 
 }
