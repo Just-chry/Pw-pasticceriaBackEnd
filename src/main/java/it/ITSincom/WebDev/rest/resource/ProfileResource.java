@@ -79,7 +79,7 @@ public class ProfileResource {
 
 
     @PUT
-    @Path("/modify/telefono")
+    @Path("/modify/phone")
     public Response modifyTelefono(ModifyRequest request, @CookieParam("sessionId") String sessionId) {
         try {
             User user = validateUserSession(sessionId);
