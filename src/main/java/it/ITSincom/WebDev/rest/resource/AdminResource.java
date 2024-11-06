@@ -83,7 +83,7 @@ public class AdminResource {
 
 
     @DELETE
-    @Path("/products/{id}/decrement")
+    @Path("/product/{id}/decrement")
     public Response decrementProductQuantity(@CookieParam("sessionId") String sessionId, @PathParam("id") Long productId) {
         try {
             if (sessionId == null || sessionId.isEmpty()) {
@@ -111,5 +111,23 @@ public class AdminResource {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         }
     }
+
+    @PUT
+    @Path("/product/{id}")
+    public Response modifyProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") Long productId, Product updatedProduct) {
+        try {
+            if (sessionId == null || sessionId.isEmpty()) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
+            }
+            authenticationService.isAdmin(sessionId);
+            productService.modifyProduct(productId, updatedProduct);
+            return Response.ok("Prodotto modificato con successo").build();
+        } catch (UserSessionNotFoundException e) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
 }
 

@@ -39,27 +39,17 @@ public class ProductService {
         // Dopo aver salvato il prodotto, aggiungi gli ingredienti associati
         if (product.getIngredientNames() != null && !product.getIngredientNames().isEmpty()) {
             for (String ingredientName : product.getIngredientNames()) {
-                // Cerca se l'ingrediente esiste già
                 Ingredient ingredient = ingredientRepository.find("name", ingredientName).firstResult();
 
-                // Se l'ingrediente non esiste, crealo
                 if (ingredient == null) {
                     ingredient = new Ingredient();
                     ingredient.setName(ingredientName);
                     ingredientRepository.persist(ingredient);
                 }
-
-                // Associa l'ingrediente al prodotto nella tabella di join 'product_ingredient'
-                ingredientRepository.getEntityManager().createNativeQuery(
-                                "INSERT INTO product_ingredient (product_id, ingredient_id) VALUES (?, ?)")
-                        .setParameter(1, product.getId())
-                        .setParameter(2, ingredient.getId())
-                        .executeUpdate();
+                productRepository.addIngredientToProduct(product.getId(), ingredient.getId());
             }
         }
     }
-
-
 
     @Transactional
     public void decrementProductQuantity(Long productId) {
@@ -82,4 +72,36 @@ public class ProductService {
         }
         productRepository.delete(product);
     }
+
+    @Transactional
+    public void modifyProduct(Long productId, Product updatedProduct) {
+        Product existingProduct = productRepository.findById(productId);
+        if (existingProduct == null) {
+            throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
+        }
+        if (updatedProduct.getName() != null) {
+            existingProduct.setName(updatedProduct.getName());
+        }
+        if (updatedProduct.getDescription() != null) {
+            existingProduct.setDescription(updatedProduct.getDescription());
+        }
+        if (updatedProduct.getImage() != null) {
+            existingProduct.setImage(updatedProduct.getImage());
+        }
+        if (updatedProduct.getPrice() != null) {
+            existingProduct.setPrice(updatedProduct.getPrice());
+        }
+        if (updatedProduct.getQuantity() != null) {
+            existingProduct.setQuantity(updatedProduct.getQuantity());
+        }
+        if (updatedProduct.getIsVisible() != null) {
+            existingProduct.setIsVisible(updatedProduct.getIsVisible());
+        }
+        if (updatedProduct.getCategory() != null) {
+            existingProduct.setCategory(updatedProduct.getCategory());
+        }
+
+        productRepository.persist(existingProduct);
+    }
+
 }
