@@ -13,6 +13,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -167,5 +168,7 @@ public class AuthenticationService {
         return actualPassword != null && actualPassword.equals(providedPassword);
     }
 
-
+    public List<User> getAllUsers() {
+        return userRepository.listAll();
+    }
 }
