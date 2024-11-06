@@ -79,6 +79,15 @@ public class ProductService {
         if (existingProduct == null) {
             throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
         }
+        if (updatedProduct.getName() != null && updatedProduct.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Il nome del prodotto non può essere vuoto.");
+        }
+        if (updatedProduct.getPrice() != null && updatedProduct.getPrice() < 0) {
+            throw new IllegalArgumentException("Il prezzo del prodotto non può essere negativo.");
+        }
+        if (updatedProduct.getQuantity() != null && updatedProduct.getQuantity() < 0) {
+            throw new IllegalArgumentException("La quantità del prodotto non può essere negativa.");
+        }
         if (updatedProduct.getName() != null) {
             existingProduct.setName(updatedProduct.getName());
         }
