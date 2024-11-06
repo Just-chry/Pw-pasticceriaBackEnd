@@ -16,12 +16,11 @@ public class User {
     private String surname;
     private String phone;
     private Boolean emailVerified = false;
-    private Boolean phoneVerified = false; // Nuovo campo per gestire la verifica del telefono
+    private Boolean phoneVerified = false;
     private String role = "user";
-    private String verificationTokenEmail; // Nuovo campo per il token di verifica email
-    private String verificationTokenPhone; // Nuovo campo per il token di verifica telefono
+    private String verificationTokenEmail;
+    private String verificationTokenPhone;
 
-    // Costruttore vuoto per JPA
     public User() {}
 
     // Getter e Setter

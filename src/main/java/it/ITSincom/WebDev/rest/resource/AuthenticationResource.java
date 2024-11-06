@@ -142,10 +142,16 @@ public class AuthenticationResource {
     @GET
     @Path("/send-test-email")
     public Response sendTestEmail() {
-        String email = "sl.falese@gmail.com";  // Può essere qualsiasi indirizzo email valido
-        mailer.send(Mail.withText(email, "Email di Prova", "Questa è una email di prova inviata tramite Quarkus Mailer."));
+        String email = "giafabi31@gmail.com";
+        String link = "https://youtube.com";
+        String content = "<p>Questa è una email di prova inviata tramite Quarkus Mailer.</p>"
+                + "<p>Per verificare la tua email, clicca sul seguente link:</p>"
+                + "<a href=\"" + link + "\">Verifica la tua email</a>";
+
+        mailer.send(Mail.withHtml(email, "Email di Prova con Link", content));
 
         return Response.ok("Email di prova inviata con successo a " + email).build();
     }
+
 
 }

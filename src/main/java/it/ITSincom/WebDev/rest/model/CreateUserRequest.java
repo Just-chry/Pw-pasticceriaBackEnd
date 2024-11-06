@@ -1,5 +1,9 @@
 package it.ITSincom.WebDev.rest.model;
 
+import it.ITSincom.WebDev.util.Validator;
+
+import javax.xml.bind.ValidationException;
+
 public class CreateUserRequest {
     private String name;
     private String surname;
@@ -28,14 +32,23 @@ public class CreateUserRequest {
     public String getEmail() {
         return email;
     }
-    public void setEmail(String email) {
-        this.email = email;
+    public void setEmail(String email) throws ValidationException {
+        if (Validator.isValidEmail(email)) {
+            this.email = email;
+        } else {
+            throw new ValidationException("Email non valida");
+        }
     }
     public String getPhone() {
         return phone;
     }
-    public void setPhone(String phone) {
-        this.phone = phone;
+
+    public void setPhone(String phone) throws ValidationException {
+        if (Validator.isValidPhone(phone)) {
+            this.phone = phone;
+        } else {
+            throw new ValidationException("Numero di telefono non valido");
+        }
     }
 
     public boolean hasValidNameAndSurname() {
