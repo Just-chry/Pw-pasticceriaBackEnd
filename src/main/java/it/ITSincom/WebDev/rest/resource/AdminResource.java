@@ -5,6 +5,7 @@ import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.AuthenticationService;
 import it.ITSincom.WebDev.service.ProductService;
+import it.ITSincom.WebDev.service.exception.EntityNotFoundException;
 import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -79,6 +80,7 @@ public class AdminResource {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         }
     }
+
 
     @DELETE
     @Path("/products/{id}/decrement")
