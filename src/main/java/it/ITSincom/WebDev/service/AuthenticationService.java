@@ -13,6 +13,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -128,7 +129,10 @@ public class AuthenticationService {
             throw new UserSessionNotFoundException("Sessione non valida");
         }
         User user = findUserById(session.getUserId());
-        return "admin".equalsIgnoreCase(user.getRole());
+        if (!"admin".equalsIgnoreCase(user.getRole())) {
+            throw new UserSessionNotFoundException("Accesso non autorizzato: l'utente non è un amministratore");
+        }
+        return true;
     }
 
     public User findUserById(Long userId) {
@@ -154,5 +158,9 @@ public class AuthenticationService {
         SecureRandom random = new SecureRandom();
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.listAll();
     }
 }
