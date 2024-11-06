@@ -98,7 +98,7 @@ public class ProfileResource {
     @Path("/modify/password")
     public Response modifyPassword(PasswordModifyRequest request, @CookieParam("sessionId") String sessionId) {
         try {
-            validateSessionId(sessionId);
+            validateUserSession(sessionId);
             UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
             if (userSession == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
