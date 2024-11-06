@@ -2,6 +2,8 @@ package it.ITSincom.WebDev.persistence.model;
 
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "session")
 public class UserSession {
@@ -10,11 +12,13 @@ public class UserSession {
     @Column(name = "session_id", length = 36)
     private String sessionId;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    // Costruttore vuoto per JPA
-    public UserSession() {}
+    public UserSession() {
+        this.sessionId = UUID.randomUUID().toString(); // Genera automaticamente un UUID per la sessione
+    }
 
     // Getter e Setter
     public String getSessionId() {
@@ -25,11 +29,11 @@ public class UserSession {
         this.sessionId = sessionId;
     }
 
-    public Long getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 }

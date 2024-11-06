@@ -3,14 +3,14 @@ package it.ITSincom.WebDev.persistence.model;
 import jakarta.persistence.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "product")
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @Column(columnDefinition = "CHAR(36)")
+    private String id;
     private String name;
     private String description;
     private String image;
@@ -25,13 +25,13 @@ public class Product {
     @Transient
     private List<String> ingredientNames;
 
-    public Product() {}
+    public Product() {this.id = UUID.randomUUID().toString();}
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

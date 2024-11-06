@@ -2,23 +2,27 @@ package it.ITSincom.WebDev.persistence.model;
 
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "ingredient")
 public class Ingredient {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(columnDefinition = "CHAR(36)")
+    private String id;
 
     @Column(nullable = false)
     private String name;
 
-    public Ingredient() {}
+    public Ingredient() {
+        this.id = UUID.randomUUID().toString();
+    }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

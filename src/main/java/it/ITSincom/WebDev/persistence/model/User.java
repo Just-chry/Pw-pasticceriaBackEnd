@@ -2,13 +2,15 @@ package it.ITSincom.WebDev.persistence.model;
 
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "user")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(columnDefinition = "CHAR(36)")
+    private String id;
 
     private String email;
     private String password;
@@ -21,14 +23,16 @@ public class User {
     private String verificationTokenEmail;
     private String verificationTokenPhone;
 
-    public User() {}
+    public User() {
+        this.id = UUID.randomUUID().toString();
+    }
 
     // Getter e Setter
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

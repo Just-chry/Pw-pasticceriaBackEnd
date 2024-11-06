@@ -61,11 +61,11 @@ public class AuthenticationService {
             throw new UserCreationException("Il numero di telefono è già in uso.");
         }
 
-        String hashedPassword = hashCalculator.calculateHash(request.getPassword());
         User user = new User();
+        user.setId(UUID.randomUUID().toString());
         user.setName(request.getName());
         user.setSurname(request.getSurname());
-        user.setPassword(hashedPassword);
+        user.setPassword(hashPassword(request.getPassword()));
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
 
@@ -107,8 +107,7 @@ public class AuthenticationService {
         String sessionId = UUID.randomUUID().toString();
         UserSession userSession = new UserSession();
         userSession.setSessionId(sessionId);
-        userSession.setUserId(user.getId());
-
+        userSession.setUser(user);
         userSessionRepository.persist(userSession);
 
         return sessionId;
@@ -128,16 +127,17 @@ public class AuthenticationService {
         if (session == null) {
             throw new UserSessionNotFoundException("Sessione non valida");
         }
-        User user = findUserById(session.getUserId());
+        User user = session.getUser();
         if (!"admin".equalsIgnoreCase(user.getRole())) {
             throw new UserSessionNotFoundException("Accesso non autorizzato: l'utente non è un amministratore");
         }
         return true;
     }
 
-    public User findUserById(Long userId) {
+    public User findUserById(String userId) {
         return userRepository.findById(userId);
     }
+
 
     public UserSession findUserSessionBySessionId(String sessionId) {
         return userSessionRepository.findBySessionId(sessionId).orElse(null);

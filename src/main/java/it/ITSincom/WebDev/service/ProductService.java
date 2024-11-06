@@ -52,7 +52,7 @@ public class ProductService {
     }
 
     @Transactional
-    public void decrementProductQuantity(Long productId) {
+    public void decrementProductQuantity(String productId) {
         Product product = productRepository.findById(productId);
         if (product == null) {
             throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
@@ -65,7 +65,7 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(Long productId) {
+    public void deleteProduct(String  productId) {
         Product product = productRepository.findById(productId);
         if (product == null) {
             throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
@@ -74,7 +74,7 @@ public class ProductService {
     }
 
     @Transactional
-    public void modifyProduct(Long productId, Product updatedProduct) {
+    public void modifyProduct(String productId, Product updatedProduct) {
         Product existingProduct = productRepository.findById(productId);
         if (existingProduct == null) {
             throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);

@@ -42,7 +42,7 @@ public class ProfileResource {
         if (userSession == null) {
             throw new EntityNotFoundException("Sessione non valida.");
         }
-        User user = authenticationService.findUserById(userSession.getUserId());
+        User user = userSession.getUser();
         if (user == null) {
             throw new EntityNotFoundException("Utente non trovato.");
         }
@@ -104,8 +104,11 @@ public class ProfileResource {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
             }
 
-            User user = authenticationService.findUserById(userSession.getUserId());
+            User user = userSession.getUser();
             String hashedOldPassword = authenticationService.hashPassword(request.getOldPassword());
+            if (request.getOldPassword().equals(request.getNewPassword())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("La nuova password non può essere uguale alla vecchia").build();
+            }
             if (!authenticationService.verifyPassword(user.getPassword(), hashedOldPassword)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("La vecchia password non corrisponde").build();
             }

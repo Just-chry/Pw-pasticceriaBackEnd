@@ -84,7 +84,7 @@ public class AdminResource {
 
     @DELETE
     @Path("/product/{id}/decrement")
-    public Response decrementProductQuantity(@CookieParam("sessionId") String sessionId, @PathParam("id") Long productId) {
+    public Response decrementProductQuantity(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) {
         try {
             if (sessionId == null || sessionId.isEmpty()) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
@@ -99,7 +99,7 @@ public class AdminResource {
 
     @DELETE
     @Path("/product/{id}")
-    public Response deleteProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") Long productId) {
+    public Response deleteProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) {
         try {
             if (sessionId == null || sessionId.isEmpty()) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
@@ -114,7 +114,7 @@ public class AdminResource {
 
     @PUT
     @Path("/product/{id}")
-    public Response modifyProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") Long productId, Product updatedProduct) {
+    public Response modifyProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") String  productId, Product updatedProduct) {
         try {
             if (sessionId == null || sessionId.isEmpty()) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
