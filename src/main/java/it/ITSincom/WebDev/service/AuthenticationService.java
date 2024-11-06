@@ -155,4 +155,13 @@ public class AuthenticationService {
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
+
+    public String hashPassword(String password) {
+        return hashCalculator.calculateHash(password);
+    }
+
+    public boolean verifyPassword(String actualPassword, String providedPassword) {
+        return actualPassword != null && actualPassword.equals(providedPassword);
+    }
+
 }
