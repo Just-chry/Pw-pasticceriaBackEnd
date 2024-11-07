@@ -1,10 +1,12 @@
 package it.ITSincom.WebDev.persistence.model;
 
 import io.quarkus.mongodb.panache.PanacheMongoEntity;
+import io.quarkus.mongodb.panache.common.MongoEntity;
 import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@MongoEntity(collection = "orders")
 public class Order extends PanacheMongoEntity {
     private ObjectId id;
     private String userId;
@@ -13,11 +15,10 @@ public class Order extends PanacheMongoEntity {
     private String status;
     private String comments;
 
-    // Costruttore senza argomenti richiesto da Panache
+    // No-argument constructor required by Panache
     public Order() {
     }
 
-    // Costruttore completo
     public Order(String userId, List<OrderItem> products, LocalDateTime pickupDate, String status, String comments) {
         this.userId = userId;
         this.products = products;
@@ -26,7 +27,7 @@ public class Order extends PanacheMongoEntity {
         this.comments = comments;
     }
 
-    // Getters e Setters
+    // Getters and Setters
     public ObjectId getId() {
         return id;
     }

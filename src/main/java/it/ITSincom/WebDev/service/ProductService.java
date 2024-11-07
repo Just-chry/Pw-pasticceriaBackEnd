@@ -4,6 +4,7 @@ import it.ITSincom.WebDev.persistence.IngredientRepository;
 import it.ITSincom.WebDev.persistence.ProductRepository;
 import it.ITSincom.WebDev.persistence.model.Ingredient;
 import it.ITSincom.WebDev.persistence.model.Product;
+import it.ITSincom.WebDev.rest.model.ProductResponse;
 import it.ITSincom.WebDev.service.exception.EntityNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -11,6 +12,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ProductService {
@@ -112,5 +114,22 @@ public class ProductService {
 
         productRepository.persist(existingProduct);
     }
+    public List<ProductResponse> getVisibleProducts() {
+        List<Product> products = productRepository.findVisibleProducts();
 
+        // Converti i prodotti in `ProductResponse` e aggiungi gli ingredienti
+        return products.stream()
+                .map(product -> {
+                    List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
+                    return new ProductResponse(
+                            product.getName(),
+                            product.getDescription(),
+                            product.getImage(),
+                            product.getPrice(),
+                            product.getCategory().name(),
+                            ingredients
+                    );
+                })
+                .collect(Collectors.toList());
+    }
 }

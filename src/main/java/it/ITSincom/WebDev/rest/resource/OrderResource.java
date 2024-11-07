@@ -1,35 +1,43 @@
 package it.ITSincom.WebDev.rest.resource;
 
-import it.ITSincom.WebDev.persistence.OrderRepository;
+import it.ITSincom.WebDev.persistence.model.Order;
+import it.ITSincom.WebDev.service.OrderService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
 
-import org.jboss.logging.Logger;
 
 @Path("/orders")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class OrderResource {
-    @Inject
-    OrderRepository orderRepository;
 
-    private static final Logger LOG = Logger.getLogger(OrderResource.class);
+    private final OrderService orderService;
+
+    @Inject
+    public OrderResource(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     @GET
-    @Path("/test-connection")
-    public Response testMongoDBConnection() {
+    public Response getOrdersByUser(@CookieParam("sessionId") Cookie sessionIdCookie) {
+        if (sessionIdCookie == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("Utente non autenticato. Effettua il login.").build();
+        }
+
+        String sessionId = sessionIdCookie.getValue();
+
         try {
-            // Prova a ottenere il numero di ordini per verificare la connessione
-            long count = orderRepository.count();
-            LOG.info("Numero di ordini: " + count);
-            return Response.ok("Connessione a MongoDB riuscita. Numero di ordini: " + count).build();
+            List<Order> userOrders = orderService.getUserOrders(sessionId);
+            return Response.ok(userOrders).build();
         } catch (Exception e) {
-            LOG.error("Errore nella connessione a MongoDB: ", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("Errore nella connessione a MongoDB: " + e.getMessage())
-                    .build();
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
+
+
 }

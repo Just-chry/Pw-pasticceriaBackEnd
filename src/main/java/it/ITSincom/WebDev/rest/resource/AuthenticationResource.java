@@ -109,12 +109,10 @@
             Optional<User> optionalUser = authenticationService.findUserByEmailOrPhone(request.getEmailOrPhone());
             User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
-            // 2. Verifica se almeno uno dei contatti è stato verificato
-            if (!user.getEmailVerified()) {
+            if (!user.getEmailVerified() && !user.getPhoneVerified()) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Contatto non verificato. Per favore, verifica il tuo indirizzo email o il tuo numero di telefono.").build();
             }
 
-            // 3. Procede con il login
             String sessionId = authenticationService.login(request);
             LoginResponse response = new LoginResponse("Login avvenuto con successo", user.getName());
             NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
