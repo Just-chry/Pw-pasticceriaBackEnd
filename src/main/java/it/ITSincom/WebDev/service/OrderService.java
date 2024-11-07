@@ -10,6 +10,7 @@ import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class OrderService {
                 (pickupTime.isAfter(LocalTime.of(14, 59)) && pickupTime.isBefore(LocalTime.of(19, 1)));
     }
 
-
+    @Transactional
     public Order createOrder(String sessionId, OrderRequest orderRequest) {
         LocalDate pickupDate = orderRequest.getPickupDate();
         LocalTime pickupTime = orderRequest.getPickupTime();
@@ -116,6 +117,15 @@ public class OrderService {
             Optional<Product> productOptional = productRepository.findByIdOptional(orderItemRequest.getProductId());
             if (productOptional.isPresent()) {
                 Product product = productOptional.get();
+                // Controlla se la quantità richiesta è disponibile
+                if (product.getQuantity() < orderItemRequest.getQuantity()) {
+                    throw new IllegalArgumentException("Quantità insufficiente per il prodotto: " + product.getName());
+                }
+
+                // Aggiorna la quantità disponibile del prodotto
+                product.setQuantity(product.getQuantity() - orderItemRequest.getQuantity());
+                productRepository.persist(product);
+
                 orderItem.setProductName(product.getName());
                 orderItem.setPrice(product.getPrice());
             } else {
@@ -133,6 +143,7 @@ public class OrderService {
 
         return order;
     }
+
 
 
 
