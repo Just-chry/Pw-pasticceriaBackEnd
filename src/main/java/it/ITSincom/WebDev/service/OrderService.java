@@ -9,6 +9,7 @@ import it.ITSincom.WebDev.persistence.model.OrderItem;
 import it.ITSincom.WebDev.persistence.model.Product;
 import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
+import it.ITSincom.WebDev.service.exception.EntityNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -77,6 +78,11 @@ public class OrderService {
     public Order createOrder(String sessionId, OrderRequest orderRequest) throws Exception {
         // Controlla la disponibilità dello slot
         String dayOfWeek = getDayOfWeek(orderRequest.getPickupDate());
+
+        if (dayOfWeek.equalsIgnoreCase("MONDAY")) {
+            throw new Exception("Non è possibile prenotare un ritiro il lunedì poiché siamo chiusi.");
+        }
+
         boolean isSlotAvailable = pickUpSlotRepository.isSlotAvailable(orderRequest.getPickupDate(), orderRequest.getPickupTime());
 
         if (!isSlotAvailable) {
@@ -110,11 +116,21 @@ public class OrderService {
                         Product product = productOpt.get();
                         orderItem.setProductName(product.getName());
                         orderItem.setPrice(product.getPrice());
+
+                        // Reduce product quantity
+                        if (product.getQuantity() < item.getQuantity()) {
+                            throw new IllegalArgumentException("Quantità richiesta per il prodotto " + product.getName() + " non disponibile.");
+                        }
+                        product.setQuantity(product.getQuantity() - item.getQuantity());
+                        productRepository.persist(product);
+                    } else {
+                        throw new EntityNotFoundException("Prodotto non trovato con ID: " + item.getProductId());
                     }
 
                     return orderItem;
                 })
                 .collect(Collectors.toList());
+
         newOrder.setProducts(orderItems);
 
         orderRepository.persist(newOrder);
