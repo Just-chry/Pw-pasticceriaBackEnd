@@ -85,31 +85,55 @@ public class OrderService {
         LocalDate pickupDate = orderRequest.getPickupDate();
         LocalTime pickupTime = orderRequest.getPickupTime();
 
+        // Controllo se il giorno è lunedì (lunedì è chiuso)
         if (pickupDate.getDayOfWeek().getValue() == 1) {
             throw new IllegalArgumentException("Non è possibile effettuare un ordine di lunedì, siamo chiusi.");
         }
+
+        // Controllo se l'orario è valido
         if (!isPickupTimeValid(pickupTime)) {
             throw new IllegalArgumentException("L'orario selezionato non è valido. Gli orari disponibili sono dalle 9:00 alle 13:00 e dalle 15:00 alle 19:00.");
         }
+
+        // Controllo se l'orario di quel giorno è già stato prenotato
         if (isPickupSlotTaken(LocalDateTime.of(pickupDate, pickupTime))) {
             throw new IllegalArgumentException("L'orario selezionato non è disponibile. Scegli un altro orario.");
         }
 
-        // Create and save the new order
+        // Crea e salva il nuovo ordine
         Order order = new Order();
-        // Set order details based on orderRequest and sessionId
         order.setUserId(sessionId);
         order.setPickupDateTime(LocalDateTime.of(pickupDate, pickupTime));
         order.setComments(orderRequest.getComments());
-        List<OrderItem> orderItems = orderRequest.getProducts().stream().map(orderItemRequest ->
-                new OrderItem(orderItemRequest.getProductId(), null, orderItemRequest.getQuantity(), 0.0)
-        ).collect(Collectors.toList());
+
+        // Convert OrderItemRequest to OrderItem
+        List<OrderItem> orderItems = orderRequest.getProducts().stream().map(orderItemRequest -> {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setProductId(orderItemRequest.getProductId());
+            orderItem.setQuantity(orderItemRequest.getQuantity());
+
+            // Recupera i dettagli del prodotto dal database
+            Optional<Product> productOptional = productRepository.findByIdOptional(orderItemRequest.getProductId());
+            if (productOptional.isPresent()) {
+                Product product = productOptional.get();
+                orderItem.setProductName(product.getName());
+                orderItem.setPrice(product.getPrice());
+            } else {
+                throw new IllegalArgumentException("Prodotto non trovato per l'ID: " + orderItemRequest.getProductId());
+            }
+
+            return orderItem;
+        }).collect(Collectors.toList());
+
         order.setProducts(orderItems);
         order.setStatus("pending");
+
+        // Salva l'ordine nel database
         order.persist();
 
         return order;
     }
+
 
 
 }
