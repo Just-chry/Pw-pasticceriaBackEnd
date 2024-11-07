@@ -4,13 +4,14 @@ import io.quarkus.mongodb.panache.PanacheMongoEntity;
 import io.quarkus.mongodb.panache.common.MongoEntity;
 import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @MongoEntity(collection = "orders")
 public class Order extends PanacheMongoEntity {
     private ObjectId id;
     private String userId;
-    private List<OrderItem> products;
+    private List<OrderItem> products = new ArrayList<>();  // Inizializza con una lista vuota per evitare valori null
     private LocalDateTime pickupDate;
     private String status;
     private String comments;

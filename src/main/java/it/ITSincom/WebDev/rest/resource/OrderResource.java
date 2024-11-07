@@ -1,6 +1,7 @@
 package it.ITSincom.WebDev.rest.resource;
 
 import it.ITSincom.WebDev.persistence.model.Order;
+import it.ITSincom.WebDev.rest.model.OrderRequest;
 import it.ITSincom.WebDev.service.OrderService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -20,6 +21,24 @@ public class OrderResource {
     @Inject
     public OrderResource(OrderService orderService) {
         this.orderService = orderService;
+    }
+
+    @POST
+    @Path("/create")
+    public Response createOrder(@CookieParam("sessionId") Cookie sessionIdCookie, OrderRequest orderRequest) {
+        if (sessionIdCookie == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("Utente non autenticato. Effettua il login.").build();
+        }
+
+        String sessionId = sessionIdCookie.getValue();
+
+        try {
+            Order newOrder = orderService.createOrder(sessionId, orderRequest);
+            return Response.ok(newOrder).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
     }
 
     @GET
