@@ -1,7 +1,6 @@
 package it.ITSincom.WebDev.service;
 
 import it.ITSincom.WebDev.persistence.OrderRepository;
-import it.ITSincom.WebDev.persistence.PickUpSlotRepository;
 import it.ITSincom.WebDev.persistence.ProductRepository;
 import it.ITSincom.WebDev.persistence.UserSessionRepository;
 import it.ITSincom.WebDev.persistence.model.Order;
@@ -9,14 +8,10 @@ import it.ITSincom.WebDev.persistence.model.OrderItem;
 import it.ITSincom.WebDev.persistence.model.Product;
 import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
-import it.ITSincom.WebDev.service.exception.EntityNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,14 +23,12 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserSessionRepository userSessionRepository;
     private final ProductRepository productRepository;
-    private final PickUpSlotRepository pickUpSlotRepository;
 
     @Inject
-    public OrderService(OrderRepository orderRepository, UserSessionRepository userSessionRepository, ProductRepository productRepository, PickUpSlotRepository pickupSlotRepository) {
+    public OrderService(OrderRepository orderRepository, UserSessionRepository userSessionRepository, ProductRepository productRepository) {
         this.orderRepository = orderRepository;
         this.userSessionRepository = userSessionRepository;
         this.productRepository = productRepository;
-        this.pickUpSlotRepository = pickupSlotRepository;
     }
 
     public List<Order> getUserOrders(String sessionId) throws Exception {
@@ -75,82 +68,48 @@ public class OrderService {
     }
 
 
-    public Order createOrder(String sessionId, OrderRequest orderRequest) throws Exception {
-        // Controlla la disponibilità dello slot
-        String dayOfWeek = getDayOfWeek(orderRequest.getPickupDate());
-
-        if (dayOfWeek.equalsIgnoreCase("MONDAY")) {
-            throw new Exception("Non è possibile prenotare un ritiro il lunedì poiché siamo chiusi.");
-        }
-
-        boolean isSlotAvailable = pickUpSlotRepository.isSlotAvailable(orderRequest.getPickupDate(), orderRequest.getPickupTime());
-
-        if (!isSlotAvailable) {
-            throw new Exception("Lo slot selezionato non è disponibile. Scegli un altro orario.");
-        }
-
-        // Aggiorna la disponibilità dello slot
-        pickUpSlotRepository.bookSlot(orderRequest.getPickupDate(), orderRequest.getPickupTime());
-
-        // Crea un nuovo ordine
-        Order newOrder = new Order();
-        newOrder.setUserId(getUserIdFromSession(sessionId));
-
-        // Ottieni la data e l'orario e combinali
-        LocalDate pickupDate = LocalDate.parse(orderRequest.getPickupDate());
-        LocalTime pickupTime = LocalTime.parse(orderRequest.getPickupTime());
-        LocalDateTime pickupDateTime = LocalDateTime.of(pickupDate, pickupTime);
-
-        newOrder.setPickupDate(pickupDateTime);
-        newOrder.setComments(orderRequest.getComments());
-        newOrder.setStatus("pending");
-
-        List<OrderItem> orderItems = orderRequest.getProducts().stream()
-                .map(item -> {
-                    OrderItem orderItem = new OrderItem();
-                    orderItem.setProductId(item.getProductId());
-                    orderItem.setQuantity(item.getQuantity());
-
-                    Optional<Product> productOpt = productRepository.findByIdOptional(item.getProductId());
-                    if (productOpt.isPresent()) {
-                        Product product = productOpt.get();
-                        orderItem.setProductName(product.getName());
-                        orderItem.setPrice(product.getPrice());
-
-                        // Reduce product quantity
-                        if (product.getQuantity() < item.getQuantity()) {
-                            throw new IllegalArgumentException("Quantità richiesta per il prodotto " + product.getName() + " non disponibile.");
-                        }
-                        product.setQuantity(product.getQuantity() - item.getQuantity());
-                        productRepository.persist(product);
-                    } else {
-                        throw new EntityNotFoundException("Prodotto non trovato con ID: " + item.getProductId());
-                    }
-
-                    return orderItem;
-                })
-                .collect(Collectors.toList());
-
-        newOrder.setProducts(orderItems);
-
-        orderRepository.persist(newOrder);
-
-        return newOrder;
+    public boolean isPickupSlotTaken(LocalDateTime pickupDateTime) {
+        // Query the database to check if there is an existing order with the same pickup date and time
+        List<Order> existingOrders = orderRepository.find("pickupDateTime = ?1", pickupDateTime).list();
+        return !existingOrders.isEmpty();
     }
 
 
-    private String getDayOfWeek(String pickupDate) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        return LocalDate.parse(pickupDate, formatter).getDayOfWeek().toString();
+    public boolean isPickupTimeValid(LocalTime pickupTime) {
+        return (pickupTime.isAfter(LocalTime.of(8, 59)) && pickupTime.isBefore(LocalTime.of(13, 1))) ||
+                (pickupTime.isAfter(LocalTime.of(14, 59)) && pickupTime.isBefore(LocalTime.of(19, 1)));
     }
 
-    private String getUserIdFromSession(String sessionId) {
-        Optional<UserSession> session = userSessionRepository.findBySessionId(sessionId);
 
-        if (session.isEmpty()) {
-            throw new RuntimeException("Sessione non trovata o non valida.");
+    public Order createOrder(String sessionId, OrderRequest orderRequest) {
+        LocalDate pickupDate = orderRequest.getPickupDate();
+        LocalTime pickupTime = orderRequest.getPickupTime();
+
+        if (pickupDate.getDayOfWeek().getValue() == 1) {
+            throw new IllegalArgumentException("Non è possibile effettuare un ordine di lunedì, siamo chiusi.");
+        }
+        if (!isPickupTimeValid(pickupTime)) {
+            throw new IllegalArgumentException("L'orario selezionato non è valido. Gli orari disponibili sono dalle 9:00 alle 13:00 e dalle 15:00 alle 19:00.");
+        }
+        if (isPickupSlotTaken(LocalDateTime.of(pickupDate, pickupTime))) {
+            throw new IllegalArgumentException("L'orario selezionato non è disponibile. Scegli un altro orario.");
         }
 
-        return session.get().getUser().getId().toString(); // Ottieni l'ID dell'utente dalla sessione
+        // Create and save the new order
+        Order order = new Order();
+        // Set order details based on orderRequest and sessionId
+        order.setUserId(sessionId);
+        order.setPickupDateTime(LocalDateTime.of(pickupDate, pickupTime));
+        order.setComments(orderRequest.getComments());
+        List<OrderItem> orderItems = orderRequest.getProducts().stream().map(orderItemRequest ->
+                new OrderItem(orderItemRequest.getProductId(), null, orderItemRequest.getQuantity(), 0.0)
+        ).collect(Collectors.toList());
+        order.setProducts(orderItems);
+        order.setStatus("pending");
+        order.persist();
+
+        return order;
     }
+
+
 }
