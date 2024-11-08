@@ -11,6 +11,7 @@ import it.ITSincom.WebDev.rest.model.OrderRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.bson.types.ObjectId;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -150,6 +151,28 @@ public class OrderService {
     }
 
 
+    @Transactional
+    public void acceptOrder(String orderId) throws Exception {
+        // Retrieve the order by its ID
+        ObjectId objectId;
+        try {
+            objectId = new ObjectId(orderId);
+        } catch (IllegalArgumentException e) {
+            throw new Exception("ID ordine non valido: " + orderId);
+        }
 
+        // Retrieve the order by its ID
+        Optional<Order> optionalOrder = orderRepository.findByIdOptional(objectId);
+        if (optionalOrder.isEmpty()) {
+            throw new Exception("Ordine non trovato con ID: " + orderId);
+        }
 
+        Order order = optionalOrder.get();
+        if (!"pending".equals(order.getStatus())) {
+            throw new Exception("L'ordine non è in stato 'pending' e non può essere accettato.");
+        }
+
+        order.setStatus("accepted");
+        orderRepository.update(order);
+    }
 }

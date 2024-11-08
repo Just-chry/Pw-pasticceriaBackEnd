@@ -41,6 +41,7 @@ public class OrderResource {
         }
     }
 
+
     @GET
     public Response getOrdersByUser(@CookieParam("sessionId") Cookie sessionIdCookie) {
         if (sessionIdCookie == null) {
