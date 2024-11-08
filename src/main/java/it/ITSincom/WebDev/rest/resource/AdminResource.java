@@ -24,10 +24,11 @@ public class AdminResource {
     @PUT
     @Path("/order/accept/{orderId}")
     public Response acceptOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
+        }
+
         try {
-            if (sessionId == null || sessionId.isEmpty()) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
             // Check if the user is an admin
             authenticationService.isAdmin(sessionId);
 
