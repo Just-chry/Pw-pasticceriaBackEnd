@@ -11,6 +11,7 @@ import it.ITSincom.WebDev.service.exception.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.Response;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -81,6 +82,38 @@ public class AuthenticationService {
         return user;
     }
 
+    @Transactional
+    public Response verifyContact(String token, String contact) {
+        Optional<User> optionalUser;
+        if (contact.contains("@")) {
+            optionalUser = findUserByEmail(contact);
+        } else {
+            optionalUser = findUserByPhone(contact);
+        }
+
+        if (optionalUser.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Utente non trovato.").build();
+        }
+
+        User user = optionalUser.get();
+
+        if (contact.contains("@")) {
+            if (user.getVerificationTokenEmail() == null || !user.getVerificationTokenEmail().equals(token)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+            }
+            user.setEmailVerified(true);
+            user.setVerificationTokenEmail(null);
+        } else {
+            if (user.getVerificationTokenPhone() == null || !user.getVerificationTokenPhone().equals(token)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+            }
+            user.setPhoneVerified(true);
+            user.setVerificationTokenPhone(null);
+        }
+
+        userRepository.getEntityManager().merge(user);
+        return Response.ok("Contatto verificato con successo! Ora puoi accedere.").build();
+    }
 
     @Transactional
     public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {

@@ -67,40 +67,8 @@
         @GET
         @Path("/verify")
         public Response verify(@QueryParam("token") String token, @QueryParam("contact") String contact) {
-            Optional<User> optionalUser;
-            if (contact.contains("@")) {
-                optionalUser = authenticationService.findUserByEmail(contact);
-            } else {
-                optionalUser = authenticationService.findUserByPhone(contact);
-            }
-
-            if (optionalUser.isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Utente non trovato.").build();
-            }
-
-            User user = optionalUser.get();
-
-            if (contact.contains("@")) {
-                if (user.getVerificationTokenEmail() == null || !user.getVerificationTokenEmail().equals(token)) {
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
-                }
-                user.setEmailVerified(true);
-                user.setVerificationTokenEmail(null);
-            } else {
-                if (user.getVerificationTokenPhone() == null || !user.getVerificationTokenPhone().equals(token)) {
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
-                }
-                user.setPhoneVerified(true);
-                user.setVerificationTokenPhone(null);
-            }
-
-            profileService.updateUser(user);
-
-            return Response.ok("Contatto verificato con successo! Ora puoi accedere.").build();
+            return authenticationService.verifyContact(token, contact);
         }
-
-
-
 
         @POST
         @Path("/login")

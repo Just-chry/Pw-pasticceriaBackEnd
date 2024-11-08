@@ -2,11 +2,9 @@ package it.ITSincom.WebDev.service;
 
 import it.ITSincom.WebDev.persistence.OrderRepository;
 import it.ITSincom.WebDev.persistence.ProductRepository;
+import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.persistence.UserSessionRepository;
-import it.ITSincom.WebDev.persistence.model.Order;
-import it.ITSincom.WebDev.persistence.model.OrderItem;
-import it.ITSincom.WebDev.persistence.model.Product;
-import it.ITSincom.WebDev.persistence.model.UserSession;
+import it.ITSincom.WebDev.persistence.model.*;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -25,12 +23,14 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserSessionRepository userSessionRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
     @Inject
-    public OrderService(OrderRepository orderRepository, UserSessionRepository userSessionRepository, ProductRepository productRepository) {
+    public OrderService(OrderRepository orderRepository, UserSessionRepository userSessionRepository, ProductRepository productRepository, UserRepository userRepository) {
         this.orderRepository = orderRepository;
         this.userSessionRepository = userSessionRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
     }
 
     public List<Order> getUserOrders(String sessionId) throws Exception {
@@ -196,7 +196,19 @@ public class OrderService {
         orderRepository.delete(order);
     }
 
-    private Order getOrder(String orderId) throws Exception {
+    public User getUserByOrderId(String orderId) throws Exception {
+        // Convert the orderId from String to ObjectId
+        Order order = getOrder(orderId);
+        String userId = order.getUserId();
+        Optional<User> optionalUser = userRepository.findByIdOptional(userId);
+        if (optionalUser.isEmpty()) {
+            throw new Exception("Utente non trovato per l'ordine con ID: " + orderId);
+        }
+
+        return optionalUser.get();
+    }
+
+    public Order getOrder(String orderId) throws Exception {
         ObjectId objectId;
         try {
             objectId = new ObjectId(orderId);
@@ -212,5 +224,4 @@ public class OrderService {
 
         return optionalOrder.get();
     }
-
 }
