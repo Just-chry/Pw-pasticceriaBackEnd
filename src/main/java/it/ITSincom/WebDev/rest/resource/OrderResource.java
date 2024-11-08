@@ -40,6 +40,23 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+    @DELETE
+    @Path("/canel/{orderId}")
+    public Response deleteOrder(@CookieParam("sessionId") Cookie sessionIdCookie, @PathParam("orderId") String orderId) {
+        if (sessionIdCookie == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("Utente non autenticato. Effettua il login.").build();
+        }
+
+        String sessionId = sessionIdCookie.getValue();
+
+        try {
+            orderService.deleteOrder(sessionId, orderId);
+            return Response.ok("Ordine cancellato con successo.").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
 
 
     @GET

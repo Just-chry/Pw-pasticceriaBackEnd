@@ -154,20 +154,7 @@ public class OrderService {
     @Transactional
     public void acceptOrder(String orderId) throws Exception {
         // Retrieve the order by its ID
-        ObjectId objectId;
-        try {
-            objectId = new ObjectId(orderId);
-        } catch (IllegalArgumentException e) {
-            throw new Exception("ID ordine non valido: " + orderId);
-        }
-
-        // Retrieve the order by its ID
-        Optional<Order> optionalOrder = orderRepository.findByIdOptional(objectId);
-        if (optionalOrder.isEmpty()) {
-            throw new Exception("Ordine non trovato con ID: " + orderId);
-        }
-
-        Order order = optionalOrder.get();
+        Order order = getOrder(orderId);
         if (!"pending".equals(order.getStatus())) {
             throw new Exception("L'ordine non è in stato 'pending' e non può essere accettato.");
         }
@@ -175,4 +162,55 @@ public class OrderService {
         order.setStatus("accepted");
         orderRepository.update(order);
     }
+
+    @Transactional
+    public void deleteOrder(String sessionId, String orderId) throws Exception {
+        // Controlla che la sessione sia valida e ottieni l'userId
+        Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
+        if (optionalUserSession.isEmpty()) {
+            throw new Exception("Sessione non valida. Effettua il login.");
+        }
+        String userId = optionalUserSession.get().getUser().getId();
+
+        // Converti l'orderId in ObjectId
+        Order order = getOrder(orderId);
+
+        // Controlla che l'ordine appartenga all'utente che sta tentando di cancellarlo
+        if (!order.getUserId().equals(userId)) {
+            throw new Exception("Non sei autorizzato a cancellare questo ordine.");
+        }
+
+        // Ripristina le quantità dei prodotti
+        for (OrderItem item : order.getProducts()) {
+            Optional<Product> productOptional = productRepository.findByIdOptional(item.getProductId());
+            if (productOptional.isPresent()) {
+                Product product = productOptional.get();
+                product.setQuantity(product.getQuantity() + item.getQuantity()); // Ripristina la quantità
+                productRepository.persist(product);
+            } else {
+                throw new Exception("Prodotto non trovato per l'ID: " + item.getProductId());
+            }
+        }
+
+        // Cancella l'ordine
+        orderRepository.delete(order);
+    }
+
+    private Order getOrder(String orderId) throws Exception {
+        ObjectId objectId;
+        try {
+            objectId = new ObjectId(orderId);
+        } catch (IllegalArgumentException e) {
+            throw new Exception("ID ordine non valido: " + orderId);
+        }
+
+        // Recupera l'ordine dal database
+        Optional<Order> optionalOrder = orderRepository.findByIdOptional(objectId);
+        if (optionalOrder.isEmpty()) {
+            throw new Exception("Ordine non trovato con ID: " + orderId);
+        }
+
+        return optionalOrder.get();
+    }
+
 }
