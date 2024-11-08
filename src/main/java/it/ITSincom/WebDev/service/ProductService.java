@@ -33,6 +33,7 @@ public class ProductService {
         return products;
     }
 
+
     @Transactional
     public void addProduct(Product product) {
         // Salva il prodotto nella tabella 'product'
@@ -54,6 +55,15 @@ public class ProductService {
     }
 
     @Transactional
+    public void deleteProduct(String  productId) {
+        Product product = productRepository.findById(productId);
+        if (product == null) {
+            throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
+        }
+        productRepository.delete(product);
+    }
+
+    @Transactional
     public void decrementProductQuantity(String productId) {
         Product product = productRepository.findById(productId);
         if (product == null) {
@@ -67,13 +77,15 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(String  productId) {
+    public void incrementProductQuantity(String productId) {
         Product product = productRepository.findById(productId);
         if (product == null) {
             throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
         }
-        productRepository.delete(product);
+        product.setQuantity(product.getQuantity() + 1);
+        productRepository.persist(product);
     }
+
 
     @Transactional
     public void modifyProduct(String productId, Product updatedProduct) {
@@ -132,4 +144,6 @@ public class ProductService {
                 })
                 .collect(Collectors.toList());
     }
+
+
 }
