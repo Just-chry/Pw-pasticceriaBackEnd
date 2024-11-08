@@ -86,6 +86,10 @@ public class OrderService {
         LocalDate pickupDate = orderRequest.getPickupDate();
         LocalTime pickupTime = orderRequest.getPickupTime();
 
+        Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
+        if (optionalUserSession.isEmpty()) {
+            throw new IllegalArgumentException("Sessione non valida. Effettua il login.");
+        }
         // Controllo se il giorno è lunedì (lunedì è chiuso)
         if (pickupDate.getDayOfWeek().getValue() == 1) {
             throw new IllegalArgumentException("Non è possibile effettuare un ordine di lunedì, siamo chiusi.");
@@ -101,9 +105,10 @@ public class OrderService {
             throw new IllegalArgumentException("L'orario selezionato non è disponibile. Scegli un altro orario.");
         }
 
+        String userId = optionalUserSession.get().getUser().getId();
         // Crea e salva il nuovo ordine
         Order order = new Order();
-        order.setUserId(sessionId);
+        order.setUserId(userId);
         order.setPickupDateTime(LocalDateTime.of(pickupDate, pickupTime));
         order.setComments(orderRequest.getComments());
 
