@@ -2,6 +2,7 @@ package it.ITSincom.WebDev.rest.resource;
 
 import it.ITSincom.WebDev.persistence.model.Order;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
+import it.ITSincom.WebDev.service.NotificationService;
 import it.ITSincom.WebDev.service.OrderService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -17,10 +18,12 @@ import java.util.List;
 public class OrderResource {
 
     private final OrderService orderService;
+    private final NotificationService notificationService;
 
     @Inject
-    public OrderResource(OrderService orderService) {
+    public OrderResource(OrderService orderService, NotificationService notificationService) {
         this.orderService = orderService;
+        this.notificationService = notificationService;
     }
 
     @POST
@@ -35,13 +38,16 @@ public class OrderResource {
 
         try {
             Order newOrder = orderService.createOrder(sessionId, orderRequest);
+            notificationService.sendNewOrderNotificationToAdmin(newOrder);
+
             return Response.ok(newOrder).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+
     @DELETE
-    @Path("/canel/{orderId}")
+    @Path("/cancel/{orderId}")
     public Response deleteOrder(@CookieParam("sessionId") Cookie sessionIdCookie, @PathParam("orderId") String orderId) {
         if (sessionIdCookie == null) {
             return Response.status(Response.Status.UNAUTHORIZED)

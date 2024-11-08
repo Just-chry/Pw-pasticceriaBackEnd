@@ -2,6 +2,7 @@ package it.ITSincom.WebDev.service;
 
 import io.quarkus.mailer.Mailer;
 import io.quarkus.mailer.Mail;
+import it.ITSincom.WebDev.persistence.ProductRepository;
 import it.ITSincom.WebDev.persistence.model.Order;
 import it.ITSincom.WebDev.persistence.model.OrderItem;
 import it.ITSincom.WebDev.persistence.model.User;
@@ -16,12 +17,14 @@ public class NotificationService {
     private final Mailer mailer;
     private final SmsService smsService;
     private final OrderService orderService;
+    private final ProductRepository productRepository; // Modifica in base alla tua implementazione
 
     @Inject
-    public NotificationService(Mailer mailer, SmsService smsService, OrderService orderService) {
+    public NotificationService(Mailer mailer, SmsService smsService, OrderService orderService, ProductRepository productRepository) {
         this.mailer = mailer;
         this.smsService = smsService;
         this.orderService = orderService;
+        this.productRepository = productRepository;
     }
 
 
@@ -65,5 +68,26 @@ public class NotificationService {
             }
         }
     }
+
+    public void sendNewOrderNotificationToAdmin(Order order) {
+        String adminEmail = "fabiogiannico3@gmail.com";
+        // Costruisci i dettagli dei prodotti
+        StringBuilder productDetails = new StringBuilder();
+        for (OrderItem item : order.getProducts()) {
+            // Supponendo che tu possa ottenere il nome del prodotto usando un metodo del repository
+            String productName = productRepository.findById(item.getProductId()).getName(); // Modifica in base alla tua implementazione
+            productDetails.append("Nome prodotto: ").append(productName)
+                    .append(", Quantità: ").append(item.getQuantity()).append("\n");
+        }
+        // Messaggio con i dettagli dei prodotti
+        String message = "Un nuovo ordine è stato effettuato:\n"
+                + "Dettagli dell'ordine:\n"
+                + productDetails.toString()
+                + "\nOrario di ritiro: " + order.getPickupDateTime();
+        // Invia notifica via email
+        mailer.send(Mail.withText(adminEmail, "Nuovo Ordine Ricevuto", message));
+        System.out.println("Notifica inviata a Giacomo: " + adminEmail);
+    }
+
 
 }
