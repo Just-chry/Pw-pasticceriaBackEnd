@@ -112,16 +112,22 @@ public class ProductService {
     private void addIngredientsToProduct(Product product) {
         if (product.getIngredientNames() != null && !product.getIngredientNames().isEmpty()) {
             for (String ingredientName : product.getIngredientNames()) {
-                Ingredient ingredient = ingredientRepository.find("name", ingredientName).firstResult();
-                if (ingredient == null) {
-                    ingredient = new Ingredient();
-                    ingredient.setName(ingredientName);
-                    ingredientRepository.persist(ingredient);
-                }
+                Ingredient ingredient = getOrCreateIngredientByName(ingredientName);
                 productRepository.addIngredientToProduct(product.getId(), ingredient.getId());
             }
         }
     }
+
+    private Ingredient getOrCreateIngredientByName(String ingredientName) {
+        Ingredient ingredient = ingredientRepository.find("name", ingredientName).firstResult();
+        if (ingredient == null) {
+            ingredient = new Ingredient();
+            ingredient.setName(ingredientName);
+            ingredientRepository.persist(ingredient);
+        }
+        return ingredient;
+    }
+
 
     private void updateProductDetails(Product product, Product updatedProduct) {
         if (updatedProduct.getName() != null) {

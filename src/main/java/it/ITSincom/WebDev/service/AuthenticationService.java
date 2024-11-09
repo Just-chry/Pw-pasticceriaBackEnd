@@ -8,6 +8,7 @@ import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
 import it.ITSincom.WebDev.service.exception.*;
+import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -33,33 +34,8 @@ public class AuthenticationService {
 
     @Transactional
     public User register(CreateUserRequest request) throws UserCreationException {
-        if (request == null) {
-            throw new UserCreationException("La richiesta non può essere vuota. Nome, cognome, password e almeno un contatto sono obbligatori.");
-        }
-        if (!request.hasValidNameAndSurname()) {
-            throw new UserCreationException("Nome e cognome sono obbligatori.");
-        }
-        if (!request.hasValidContact()) {
-            throw new UserCreationException("È necessario inserire almeno un'email o un numero di telefono.");
-        }
-
-        boolean emailInUse = false;
-        boolean telefonoInUse = false;
-
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            emailInUse = userRepository.findByEmail(request.getEmail()).isPresent();
-        }
-        if (request.getPhone() != null && !request.getPhone().isBlank()) {
-            telefonoInUse = userRepository.findByPhone(request.getPhone()).isPresent();
-        }
-
-        if (emailInUse && telefonoInUse) {
-            throw new UserCreationException("Sia l'email che il numero di telefono sono già in uso.");
-        } else if (emailInUse) {
-            throw new UserCreationException("L'email è già in uso.");
-        } else if (telefonoInUse) {
-            throw new UserCreationException("Il numero di telefono è già in uso.");
-        }
+        ValidationUtils.validateUserRequest(request);
+        checkIfEmailOrPhoneExists(request);
 
         User user = new User();
         user.setId(UUID.randomUUID().toString());
@@ -69,48 +45,31 @@ public class AuthenticationService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
 
+        // Generazione token di verifica
         if (user.getEmail() != null && !user.getEmail().isEmpty()) {
-            String verificationToken = UUID.randomUUID().toString();
-            user.setVerificationTokenEmail(verificationToken);
+            user.setVerificationTokenEmail(UUID.randomUUID().toString());
         } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
-            String otp = generateOtp();
-            user.setVerificationTokenPhone(otp);
+            user.setVerificationTokenPhone(generateOtp());
         }
 
         userRepository.persist(user);
         return user;
     }
 
-
     @Transactional
     public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
-        if (request == null || request.getEmailOrPhone() == null || request.getPassword() == null) {
-            throw new IllegalArgumentException("Email/Telefono e password sono obbligatori.");
-        }
+        ValidationUtils.validateLoginRequest(request);
 
         Optional<User> optionalUser = userRepository.findUserByEmailOrPhone(request.getEmailOrPhone());
-        if (optionalUser.isEmpty()) {
-            throw new UserNotFoundException("Utente non trovato.");
-        }
+        User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
-        User user = optionalUser.get();
-        String hashedPassword = hashCalculator.calculateHash(request.getPassword());
-        if (!user.getPassword().equals(hashedPassword)) {
+        if (!verifyPassword(user.getPassword(), request.getPassword())) {
             throw new WrongPasswordException("Password errata.");
         }
 
-        Optional<UserSession> existingSession = userSessionRepository.findByUserId(user.getId());
-        if (existingSession.isPresent()) {
-            throw new SessionAlreadyExistsException("Utente ha già una sessione attiva.");
-        }
+        checkIfSessionExists(user.getId());
 
-        String sessionId = UUID.randomUUID().toString();
-        UserSession userSession = new UserSession();
-        userSession.setSessionId(sessionId);
-        userSession.setUser(user);
-        userSessionRepository.persist(userSession);
-
-        return sessionId;
+        return createSession(user);
     }
 
     @Transactional
@@ -122,22 +81,47 @@ public class AuthenticationService {
         userSessionRepository.delete(optionalSession.get());
     }
 
-    public boolean isAdmin(String sessionId) throws UserSessionNotFoundException {
+    public void isAdmin(String sessionId) throws UserSessionNotFoundException, UnauthorizedAccessException {
+        ValidationUtils.validateSessionId(sessionId);
         UserSession session = findUserSessionBySessionId(sessionId);
         if (session == null) {
             throw new UserSessionNotFoundException("Sessione non valida");
         }
         User user = session.getUser();
         if (!"admin".equalsIgnoreCase(user.getRole())) {
-            throw new UserSessionNotFoundException("Accesso non autorizzato: l'utente non è un amministratore");
+            throw new UnauthorizedAccessException("Accesso non autorizzato: l'utente non è un amministratore");
         }
-        return true;
     }
 
-    public User findUserById(String userId) {
-        return userRepository.findById(userId);
+
+    private void checkIfEmailOrPhoneExists(CreateUserRequest request) throws UserCreationException {
+        boolean emailInUse = request.getEmail() != null && userRepository.findByEmail(request.getEmail()).isPresent();
+        boolean phoneInUse = request.getPhone() != null && userRepository.findByPhone(request.getPhone()).isPresent();
+
+        if (emailInUse && phoneInUse) {
+            throw new UserCreationException("Sia l'email che il numero di telefono sono già in uso.");
+        } else if (emailInUse) {
+            throw new UserCreationException("L'email è già in uso.");
+        } else if (phoneInUse) {
+            throw new UserCreationException("Il numero di telefono è già in uso.");
+        }
     }
 
+    private String createSession(User user) {
+        String sessionId = UUID.randomUUID().toString();
+        UserSession userSession = new UserSession();
+        userSession.setSessionId(sessionId);
+        userSession.setUser(user);
+        userSessionRepository.persist(userSession);
+        return sessionId;
+    }
+
+    private void checkIfSessionExists(String userId) throws SessionAlreadyExistsException {
+        Optional<UserSession> existingSession = userSessionRepository.findByUserId(userId);
+        if (existingSession.isPresent()) {
+            throw new SessionAlreadyExistsException("Utente ha già una sessione attiva.");
+        }
+    }
 
     public UserSession findUserSessionBySessionId(String sessionId) {
         return userSessionRepository.findBySessionId(sessionId).orElse(null);
