@@ -34,6 +34,7 @@ public class ProductResource {
     public Response getVisibleProducts(@CookieParam("sessionId") String sessionId) {
         try {
             validateSession(sessionId);
+
             List<ProductResponse> productResponses = productService.getVisibleProducts();
             return Response.ok(productResponses).build();
         } catch (UserSessionNotFoundException e) {
@@ -41,23 +42,12 @@ public class ProductResource {
         }
     }
 
-    private void validateSession(String sessionId) throws UserSessionNotFoundException {
-        if (sessionId == null || sessionId.isEmpty()) {
-            throw new UserSessionNotFoundException("Sessione non trovata o non valida. Effettua il login.");
-        }
-
-        if (authenticationService.findUserSessionBySessionId(sessionId) == null) {
-            throw new UserSessionNotFoundException("Sessione non valida. Effettua il login.");
-        }
-    }
-
     @GET
     public Response getAllProducts(@CookieParam("sessionId") String sessionId) {
         try {
-            if (sessionId == null || sessionId.isEmpty()) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-            authenticationService.isAdmin(sessionId);
+            // Chiama il metodo di validazione per assicurarti che la sessione sia valida
+            validateAdminSession(sessionId);
+
             List<Product> productResponses = productService.getAllProducts();
             return Response.ok(productResponses).build();
         } catch (UserSessionNotFoundException e) {
@@ -69,10 +59,8 @@ public class ProductResource {
     @Path("/add")
     public Response addProduct(@CookieParam("sessionId") String sessionId, Product product) {
         try {
-            if (sessionId == null || sessionId.isEmpty()) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-            authenticationService.isAdmin(sessionId);  // Controllo ruolo admin
+            // Chiama il metodo di validazione per assicurarti che la sessione sia valida
+            validateAdminSession(sessionId);
 
             productService.addProduct(product);
             return Response.status(Response.Status.CREATED).entity("Prodotto aggiunto con successo").build();
@@ -85,10 +73,8 @@ public class ProductResource {
     @Path("/{id}")
     public Response deleteProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) {
         try {
-            if (sessionId == null || sessionId.isEmpty()) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-            authenticationService.isAdmin(sessionId);
+            // Chiama il metodo di validazione per assicurarti che la sessione sia valida
+            validateAdminSession(sessionId);
 
             productService.deleteProduct(productId);
             return Response.ok("Prodotto rimosso con successo").build();
@@ -101,10 +87,8 @@ public class ProductResource {
     @Path("/{id}/decrement")
     public Response decrementProductQuantity(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) {
         try {
-            if (sessionId == null || sessionId.isEmpty()) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-            authenticationService.isAdmin(sessionId);
+            // Chiama il metodo di validazione per assicurarti che la sessione sia valida
+            validateAdminSession(sessionId);
 
             productService.decrementProductQuantity(productId);
             return Response.ok("Quantità del prodotto decrementata di 1").build();
@@ -117,10 +101,8 @@ public class ProductResource {
     @Path("/{id}/increment")
     public Response incrementProductQuantity(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) {
         try {
-            if (sessionId == null || sessionId.isEmpty()) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-            authenticationService.isAdmin(sessionId);
+            // Chiama il metodo di validazione per assicurarti che la sessione sia valida
+            validateAdminSession(sessionId);
 
             productService.incrementProductQuantity(productId);
             return Response.ok("Quantità del prodotto incrementata di 1").build();
@@ -134,10 +116,9 @@ public class ProductResource {
     @Path("/{id}")
     public Response modifyProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId, Product updatedProduct) {
         try {
-            if (sessionId == null || sessionId.isEmpty()) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Sessione non valida").build();
-            }
-            authenticationService.isAdmin(sessionId);
+            // Chiama il metodo di validazione per assicurarti che la sessione sia valida
+            validateAdminSession(sessionId);
+
             productService.modifyProduct(productId, updatedProduct);
             return Response.ok("Prodotto modificato con successo").build();
         } catch (UserSessionNotFoundException e) {
@@ -146,4 +127,20 @@ public class ProductResource {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
+
+    private void validateSession(String sessionId) throws UserSessionNotFoundException {
+        if (sessionId == null || sessionId.isEmpty()) {
+            throw new UserSessionNotFoundException("Sessione non trovata o non valida. Effettua il login.");
+        }
+
+        if (authenticationService.findUserSessionBySessionId(sessionId) == null) {
+            throw new UserSessionNotFoundException("Sessione non valida. Effettua il login.");
+        }
+    }
+
+    private void validateAdminSession(String sessionId) throws UserSessionNotFoundException {
+        validateSession(sessionId);
+        authenticationService.isAdmin(sessionId);
+    }
+
 }

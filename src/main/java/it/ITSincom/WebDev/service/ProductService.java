@@ -6,6 +6,7 @@ import it.ITSincom.WebDev.persistence.model.Ingredient;
 import it.ITSincom.WebDev.persistence.model.Product;
 import it.ITSincom.WebDev.rest.model.ProductResponse;
 import it.ITSincom.WebDev.service.exception.EntityNotFoundException;
+import it.ITSincom.WebDev.service.exception.ProductNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -39,7 +40,6 @@ public class ProductService {
         // Salva il prodotto nella tabella 'product'
         productRepository.persist(product);
 
-        // Dopo aver salvato il prodotto, aggiungi gli ingredienti associati
         if (product.getIngredientNames() != null && !product.getIngredientNames().isEmpty()) {
             for (String ingredientName : product.getIngredientNames()) {
                 Ingredient ingredient = ingredientRepository.find("name", ingredientName).firstResult();
@@ -55,20 +55,14 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(String  productId) {
-        Product product = productRepository.findById(productId);
-        if (product == null) {
-            throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
-        }
+    public void deleteProduct(String productId) {
+        Product product = getProductByIdOrThrow(productId);
         productRepository.delete(product);
     }
 
     @Transactional
     public void decrementProductQuantity(String productId) {
-        Product product = productRepository.findById(productId);
-        if (product == null) {
-            throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
-        }
+        Product product = getProductByIdOrThrow(productId);
         if (product.getQuantity() > 0) {
             product.setQuantity(product.getQuantity() - 1);
         } else {
@@ -78,21 +72,14 @@ public class ProductService {
 
     @Transactional
     public void incrementProductQuantity(String productId) {
-        Product product = productRepository.findById(productId);
-        if (product == null) {
-            throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
-        }
+        Product product = getProductByIdOrThrow(productId);
         product.setQuantity(product.getQuantity() + 1);
-        productRepository.persist(product);
     }
 
 
     @Transactional
     public void modifyProduct(String productId, Product updatedProduct) {
-        Product existingProduct = productRepository.findById(productId);
-        if (existingProduct == null) {
-            throw new EntityNotFoundException("Prodotto non trovato con ID: " + productId);
-        }
+        Product product = getProductByIdOrThrow(productId);
         if (updatedProduct.getName() != null && updatedProduct.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Il nome del prodotto non può essere vuoto.");
         }
@@ -103,32 +90,32 @@ public class ProductService {
             throw new IllegalArgumentException("La quantità del prodotto non può essere negativa.");
         }
         if (updatedProduct.getName() != null) {
-            existingProduct.setName(updatedProduct.getName());
+            product.setName(updatedProduct.getName());
         }
         if (updatedProduct.getDescription() != null) {
-            existingProduct.setDescription(updatedProduct.getDescription());
+            product.setDescription(updatedProduct.getDescription());
         }
         if (updatedProduct.getImage() != null) {
-            existingProduct.setImage(updatedProduct.getImage());
+            product.setImage(updatedProduct.getImage());
         }
         if (updatedProduct.getPrice() != null) {
-            existingProduct.setPrice(updatedProduct.getPrice());
+            product.setPrice(updatedProduct.getPrice());
         }
         if (updatedProduct.getQuantity() != null) {
-            existingProduct.setQuantity(updatedProduct.getQuantity());
+            product.setQuantity(updatedProduct.getQuantity());
         }
         if (updatedProduct.getIsVisible() != null) {
-            existingProduct.setIsVisible(updatedProduct.getIsVisible());
+            product.setIsVisible(updatedProduct.getIsVisible());
         }
         if (updatedProduct.getCategory() != null) {
-            existingProduct.setCategory(updatedProduct.getCategory());
+            product.setCategory(updatedProduct.getCategory());
         }
 
-        productRepository.persist(existingProduct);
+        productRepository.persist(product);
     }
+
     public List<ProductResponse> getVisibleProducts() {
         List<Product> products = productRepository.findVisibleProducts();
-
         // Converti i prodotti in `ProductResponse` e aggiungi gli ingredienti
         return products.stream()
                 .map(product -> {
@@ -145,5 +132,12 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    private Product getProductByIdOrThrow(String productId) {
+        Product product = productRepository.findById(productId);
+        if (product == null) {
+            throw new ProductNotFoundException("Prodotto non trovato con ID: " + productId);
+        }
+        return product;
+    }
 
 }
