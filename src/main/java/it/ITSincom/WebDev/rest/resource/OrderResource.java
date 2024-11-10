@@ -1,13 +1,14 @@
 package it.ITSincom.WebDev.rest.resource;
 
 import it.ITSincom.WebDev.persistence.model.Order;
-import it.ITSincom.WebDev.rest.model.OrderItemRequest;
+import it.ITSincom.WebDev.persistence.model.User;
+import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
 import it.ITSincom.WebDev.service.AuthenticationService;
 import it.ITSincom.WebDev.service.NotificationService;
 import it.ITSincom.WebDev.service.OrderService;
 import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
-import it.ITSincom.WebDev.util.ValidationUtils;
+import it.ITSincom.WebDev.util.Validation;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -32,27 +33,19 @@ public class OrderResource {
     }
 
     @POST
-    @Path("/add")
-    public Response addToCart(@CookieParam("sessionId") String sessionId, OrderItemRequest itemRequest) {
-        try {
-            ValidationUtils.validateSessionId(sessionId);
-            orderService.addToCart(sessionId, itemRequest);
-            return Response.ok("Prodotto aggiunto al carrello con successo.").build();
-        } catch (UserSessionNotFoundException e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
-
-    @POST
     @Path("/create")
     public Response createOrderFromCart(@CookieParam("sessionId") String sessionId, OrderRequest orderRequest) {
         try {
-            ValidationUtils.validateSessionId(sessionId);
-            Order order = orderService.createOrderFromCart(sessionId, orderRequest);
-            notificationService.sendNewOrderNotificationToAdmin(order);
-            return Response.ok("Ordine creato con successo.").build();
+            // Recupero della UserSession e dell'utente
+            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
+            User user = (userSession != null) ? userSession.getUser() : null;
+
+            // Validazione del sessionId, della UserSession e dell'utente
+            Validation.validateSessionAndUser(sessionId, userSession, user);
+
+            Order newOrder = orderService.createOrder(sessionId, orderRequest); // Passa l'utente invece di sessionId
+            notificationService.sendNewOrderNotificationToAdmin(newOrder);
+            return Response.ok(newOrder).build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -65,8 +58,11 @@ public class OrderResource {
     @Path("/cancel/{orderId}")
     public Response deleteOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
         try {
-            ValidationUtils.validateSessionId(sessionId);
-            orderService.deleteOrder(sessionId, orderId);
+            // Recupero della UserSession e dell'utente
+            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
+            User user = (userSession != null) ? userSession.getUser() : null;
+            Validation.validateSessionAndUser(sessionId, userSession, user);
+            orderService.deleteOrder(sessionId, orderId); // Passa l'utente invece del sessionId
             return Response.ok("Ordine cancellato con successo.").build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();

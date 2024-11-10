@@ -7,9 +7,10 @@ import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
+import it.ITSincom.WebDev.rest.model.LoginResponse;
 import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.exception.*;
-import it.ITSincom.WebDev.util.ValidationUtils;
+import it.ITSincom.WebDev.util.Validation;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -37,7 +38,7 @@ public class AuthenticationService {
 
     @Transactional
     public User register(CreateUserRequest request) throws UserCreationException {
-        ValidationUtils.validateUserRequest(request);
+        Validation.validateUserRequest(request);
         checkIfEmailOrPhoneExists(request);
 
         User user = new User();
@@ -92,12 +93,19 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
-        ValidationUtils.validateLoginRequest(request);
+    public LoginResponse handleLogin(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
+        // Validazione della richiesta
+        Validation.validateLoginRequest(request);
 
         Optional<User> optionalUser = userRepository.findUserByEmailOrPhone(request.getEmailOrPhone());
         User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
+        // Controlla se l'utente ha verificato almeno un contatto
+        if (!user.getEmailVerified() && !user.getPhoneVerified()) {
+            throw new UnauthorizedAccessException("Contatto non verificato. Per favore, verifica il tuo indirizzo email o il tuo numero di telefono.");
+        }
+
+        // Verifica della password
         String hashedProvidedPassword = hashPassword(request.getPassword());
         if (!verifyPassword(user.getPassword(), hashedProvidedPassword)) {
             throw new WrongPasswordException("Password errata.");
@@ -105,7 +113,9 @@ public class AuthenticationService {
 
         checkIfSessionExists(user.getId());
 
-        return createSession(user);
+        // Crea una nuova sessione
+        String sessionId = createSession(user);
+        return new LoginResponse("Login avvenuto con successo", user.getName(), sessionId);
     }
 
     @Transactional
@@ -118,17 +128,13 @@ public class AuthenticationService {
     }
 
     public void isAdmin(String sessionId) throws UserSessionNotFoundException, UnauthorizedAccessException {
-        ValidationUtils.validateSessionId(sessionId);
         UserSession session = findUserSessionBySessionId(sessionId);
-        if (session == null) {
-            throw new UserSessionNotFoundException("Sessione non valida");
-        }
-        User user = session.getUser();
+        User user = (session != null) ? session.getUser() : null;
+        Validation.validateSessionAndUser(sessionId, session, user);
         if (!"admin".equalsIgnoreCase(user.getRole())) {
             throw new UnauthorizedAccessException("Accesso non autorizzato: l'utente non è un amministratore");
         }
     }
-
 
     private void checkIfEmailOrPhoneExists(CreateUserRequest request) throws UserCreationException {
         boolean emailInUse = request.getEmail() != null && userRepository.findByEmail(request.getEmail()).isPresent();

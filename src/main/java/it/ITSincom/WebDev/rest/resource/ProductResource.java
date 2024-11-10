@@ -1,34 +1,37 @@
 package it.ITSincom.WebDev.rest.resource;
 
-import it.ITSincom.WebDev.persistence.model.Product;
-import it.ITSincom.WebDev.rest.model.ProductAdminResponse;
-import it.ITSincom.WebDev.rest.model.ProductResponse;
-import it.ITSincom.WebDev.service.ProductService;
-import it.ITSincom.WebDev.service.AuthenticationService;
-import it.ITSincom.WebDev.service.exception.UnauthorizedAccessException;
-import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+    import it.ITSincom.WebDev.persistence.model.Product;
+    import it.ITSincom.WebDev.persistence.model.User;
+    import it.ITSincom.WebDev.persistence.model.UserSession;
+    import it.ITSincom.WebDev.rest.model.ProductAdminResponse;
+    import it.ITSincom.WebDev.rest.model.ProductResponse;
+    import it.ITSincom.WebDev.service.ProductService;
+    import it.ITSincom.WebDev.service.AuthenticationService;
+    import it.ITSincom.WebDev.service.exception.UnauthorizedAccessException;
+    import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
+    import it.ITSincom.WebDev.util.Validation;
+    import jakarta.enterprise.context.ApplicationScoped;
+    import jakarta.inject.Inject;
+    import jakarta.ws.rs.*;
+    import jakarta.ws.rs.core.MediaType;
+    import jakarta.ws.rs.core.Response;
 
-import java.util.List;
+    import java.util.List;
 
-@Path("/products")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
-@ApplicationScoped
-public class ProductResource {
+    @Path("/products")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApplicationScoped
+    public class ProductResource {
 
-    private final ProductService productService;
-    private final AuthenticationService authenticationService;
+        private final ProductService productService;
+        private final AuthenticationService authenticationService;
 
-    @Inject
-    public ProductResource(ProductService productService, AuthenticationService authenticationService) {
-        this.productService = productService;
-        this.authenticationService = authenticationService;
-    }
+        @Inject
+        public ProductResource(ProductService productService, AuthenticationService authenticationService) {
+            this.productService = productService;
+            this.authenticationService = authenticationService;
+        }
 
     @GET
     public Response getAllProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
