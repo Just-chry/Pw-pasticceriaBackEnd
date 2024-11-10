@@ -8,9 +8,11 @@ import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
 import it.ITSincom.WebDev.service.exception.*;
+import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.Response;
 
 import java.security.SecureRandom;
 import java.util.List;

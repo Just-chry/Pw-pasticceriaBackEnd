@@ -3,9 +3,9 @@
     import it.ITSincom.WebDev.persistence.model.User;
     import it.ITSincom.WebDev.rest.model.LoginRequest;
     import it.ITSincom.WebDev.rest.model.LoginResponse;
-    import it.ITSincom.WebDev.service.ProfileService;
     import it.ITSincom.WebDev.service.SmsService;
     import it.ITSincom.WebDev.service.exception.*;
+    import it.ITSincom.WebDev.util.ValidationUtils;
     import jakarta.inject.Inject;
     import jakarta.ws.rs.*;
     import jakarta.ws.rs.core.MediaType;
@@ -27,14 +27,12 @@
     public class AuthenticationResource {
 
         private final AuthenticationService authenticationService;
-        private final ProfileService profileService;
         private final Mailer mailer;
         private final SmsService smsService;
 
         @Inject
-        public AuthenticationResource(AuthenticationService authenticationService, ProfileService profileService, Mailer mailer, SmsService smsService) {
+        public AuthenticationResource(AuthenticationService authenticationService, Mailer mailer, SmsService smsService) {
             this.authenticationService = authenticationService;
-            this.profileService = profileService;
             this.mailer = mailer;
             this.smsService = smsService;
         }

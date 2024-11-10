@@ -1,7 +1,12 @@
 package it.ITSincom.WebDev.rest.resource;
 
 import it.ITSincom.WebDev.persistence.model.Order;
+import it.ITSincom.WebDev.rest.model.OrderRequest;
+import it.ITSincom.WebDev.service.AuthenticationService;
+import it.ITSincom.WebDev.service.NotificationService;
 import it.ITSincom.WebDev.service.OrderService;
+import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
+import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Cookie;
