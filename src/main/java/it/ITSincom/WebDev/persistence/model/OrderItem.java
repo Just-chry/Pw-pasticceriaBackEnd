@@ -2,19 +2,18 @@ package it.ITSincom.WebDev.persistence.model;
 
 public class OrderItem {
     private String productId;
+    private String productName;
     private int quantity;
-    private String productName; // Added field for product name
-    private double price; // Added field for price
+    private double price;
 
-    // No-argument constructor
+    // Constructors
     public OrderItem() {
     }
 
-    // Full constructor
-    public OrderItem(String productId, int quantity, String productName, double price) {
+    public OrderItem(String productId, String productName, int quantity, double price) {
         this.productId = productId;
-        this.quantity = quantity;
         this.productName = productName;
+        this.quantity = quantity;
         this.price = price;
     }
 
@@ -27,20 +26,20 @@ public class OrderItem {
         this.productId = productId;
     }
 
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
     public String getProductName() {
         return productName;
     }
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
     public double getPrice() {

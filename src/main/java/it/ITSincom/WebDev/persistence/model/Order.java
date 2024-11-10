@@ -10,21 +10,21 @@ import java.util.List;
 public class Order extends PanacheMongoEntity {
     private ObjectId id;
     private String userId;
-    private List<OrderItem> products;
-    private LocalDateTime pickupDate;
-    private String status;
+    private LocalDateTime pickupDateTime;
     private String comments;
+    private List<OrderItem> products;
+    private String status;
 
-    // No-argument constructor required by Panache
+    // Constructors
     public Order() {
     }
 
-    public Order(String userId, List<OrderItem> products, LocalDateTime pickupDate, String status, String comments) {
+    public Order(String userId, LocalDateTime pickupDateTime, String comments, List<OrderItem> products, String status) {
         this.userId = userId;
-        this.products = products;
-        this.pickupDate = pickupDate;
-        this.status = status;
+        this.pickupDateTime = pickupDateTime;
         this.comments = comments;
+        this.products = products;
+        this.status = status;
     }
 
     // Getters and Setters
@@ -44,28 +44,12 @@ public class Order extends PanacheMongoEntity {
         this.userId = userId;
     }
 
-    public List<OrderItem> getProducts() {
-        return products;
+    public LocalDateTime getPickupDateTime() {
+        return pickupDateTime;
     }
 
-    public void setProducts(List<OrderItem> products) {
-        this.products = products;
-    }
-
-    public LocalDateTime getPickupDate() {
-        return pickupDate;
-    }
-
-    public void setPickupDate(LocalDateTime pickupDate) {
-        this.pickupDate = pickupDate;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
+    public void setPickupDateTime(LocalDateTime pickupDateTime) {
+        this.pickupDateTime = pickupDateTime;
     }
 
     public String getComments() {
@@ -75,4 +59,21 @@ public class Order extends PanacheMongoEntity {
     public void setComments(String comments) {
         this.comments = comments;
     }
+
+    public List<OrderItem> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<OrderItem> products) {
+        this.products = products;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }
+

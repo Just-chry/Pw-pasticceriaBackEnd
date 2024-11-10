@@ -29,14 +29,13 @@ import io.quarkus.mailer.Mail;
 public class AuthenticationResource {
 
     private final AuthenticationService authenticationService;
-    private final ProfileService profileService;
+
     private final Mailer mailer;
     private final SmsService smsService;
 
     @Inject
-    public AuthenticationResource(AuthenticationService authenticationService, ProfileService profileService, Mailer mailer, SmsService smsService) {
+    public AuthenticationResource(AuthenticationService authenticationService, Mailer mailer, SmsService smsService) {
         this.authenticationService = authenticationService;
-        this.profileService = profileService;
         this.mailer = mailer;
         this.smsService = smsService;
     }
@@ -59,25 +58,9 @@ public class AuthenticationResource {
 
     @GET
     @Path("/verify")
-    public Response verify(@QueryParam("token") String token, @QueryParam("contact") String contact) throws VerificationTokenInvalidException {
-        Optional<User> optionalUser;
-        if (contact.contains("@")) {
-            optionalUser = authenticationService.findUserByEmail(contact);
-        } else {
-            optionalUser = authenticationService.findUserByPhone(contact);
-        }
-
-        if (optionalUser.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Utente non trovato.").build();
-        }
-
-        User user = optionalUser.get();
-        verifyContact(user, contact, token);
-        profileService.updateUser(user);
-
-        return Response.ok("Contatto verificato con successo! Ora puoi accedere.").build();
+    public Response verify(@QueryParam("token") String token, @QueryParam("contact") String contact) {
+        return authenticationService.verifyContact(token, contact);
     }
-
 
     @POST
     @Path("/login")
@@ -102,9 +85,8 @@ public class AuthenticationResource {
     public Response logout(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
         // Utilizza ValidationUtils per validare l'ID della sessione
         ValidationUtils.validateSessionId(sessionId);
-
         authenticationService.logout(sessionId);
-        NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", 3600, false);
+        NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", -1, false);
         return Response.ok("Logout avvenuto con successo").cookie(expiredCookie).build();
     }
 
@@ -124,17 +106,4 @@ public class AuthenticationResource {
             throw new UserCreationException("Errore durante l'invio dell'OTP: " + e.getMessage());
         }
     }
-
-    private void verifyContact(User user, String contact, String token) throws VerificationTokenInvalidException {
-        if (contact.contains("@")) {
-            ValidationUtils.validateToken(user.getVerificationTokenEmail(), token);
-            user.setEmailVerified(true);
-            user.setVerificationTokenEmail(null);
-        } else {
-            ValidationUtils.validateToken(user.getVerificationTokenPhone(), token);
-            user.setPhoneVerified(true);
-            user.setVerificationTokenPhone(null);
-        }
-    }
-
 }

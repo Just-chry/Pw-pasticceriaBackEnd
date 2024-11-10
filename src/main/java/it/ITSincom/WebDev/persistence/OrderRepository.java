@@ -9,7 +9,7 @@ import java.util.List;
 @ApplicationScoped
 public class OrderRepository implements PanacheMongoRepository<Order> {
     public List<Order> findByUserId(String userId) {
-        return find("user_id", userId).list();
+        return find("userId", userId).list();
     }
 
 }

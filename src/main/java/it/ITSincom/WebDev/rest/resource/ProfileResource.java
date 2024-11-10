@@ -8,7 +8,6 @@ import it.ITSincom.WebDev.rest.model.ModifyRequest;
 import it.ITSincom.WebDev.rest.model.PasswordModifyRequest;
 import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.AuthenticationService;
-import it.ITSincom.WebDev.service.HashCalculator;
 import it.ITSincom.WebDev.service.ProfileService;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;

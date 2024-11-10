@@ -12,6 +12,7 @@ import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.Response;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -45,7 +46,6 @@ public class AuthenticationService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
 
-        // Generazione token di verifica
         if (user.getEmail() != null && !user.getEmail().isEmpty()) {
             user.setVerificationTokenEmail(UUID.randomUUID().toString());
         } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
@@ -57,13 +57,47 @@ public class AuthenticationService {
     }
 
     @Transactional
+    public Response verifyContact(String token, String contact) {
+        Optional<User> optionalUser;
+        if (contact.contains("@")) {
+            optionalUser = findUserByEmail(contact);
+        } else {
+            optionalUser = findUserByPhone(contact);
+        }
+
+        if (optionalUser.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Utente non trovato.").build();
+        }
+
+        User user = optionalUser.get();
+
+        if (contact.contains("@")) {
+            if (user.getVerificationTokenEmail() == null || !user.getVerificationTokenEmail().equals(token)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+            }
+            user.setEmailVerified(true);
+            user.setVerificationTokenEmail(null);
+        } else {
+            if (user.getVerificationTokenPhone() == null || !user.getVerificationTokenPhone().equals(token)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+            }
+            user.setPhoneVerified(true);
+            user.setVerificationTokenPhone(null);
+        }
+
+        userRepository.getEntityManager().merge(user);
+        return Response.ok("Contatto verificato con successo! Ora puoi accedere.").build();
+    }
+
+    @Transactional
     public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
         ValidationUtils.validateLoginRequest(request);
 
         Optional<User> optionalUser = userRepository.findUserByEmailOrPhone(request.getEmailOrPhone());
         User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
-        if (!verifyPassword(user.getPassword(), request.getPassword())) {
+        String hashedProvidedPassword = hashPassword(request.getPassword());
+        if (!verifyPassword(user.getPassword(), hashedProvidedPassword)) {
             throw new WrongPasswordException("Password errata.");
         }
 

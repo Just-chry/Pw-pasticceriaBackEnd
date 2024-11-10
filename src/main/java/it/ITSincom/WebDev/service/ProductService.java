@@ -97,10 +97,10 @@ public class ProductService {
     }
 
     private void validateProductInput(Product product) {
-        if (product.getName() == null || product.getName().trim().isEmpty()) {
+        if (product.getName() != null && product.getName().trim().isEmpty()) {
             throw new InvalidProductException("Il nome del prodotto non può essere vuoto.");
         }
-        if (product.getPrice() == null || product.getPrice() < 0) {
+        if (product.getPrice() != null && product.getPrice() < 0) {
             throw new InvalidProductException("Il prezzo del prodotto non può essere negativo.");
         }
         if (product.getQuantity() != null && product.getQuantity() < 0) {
