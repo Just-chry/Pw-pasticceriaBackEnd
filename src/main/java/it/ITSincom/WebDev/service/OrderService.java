@@ -57,7 +57,7 @@ public class OrderService {
                             item.setProductName(productDetails.getName());
                             item.setPrice(productDetails.getPrice());
                         } else {
-                            System.out.println("Product not found for ID: " + item.getProductId());
+                            throw new Exception("Nessun ordine trovato per l'utente.");
                         }
                     }
                 }

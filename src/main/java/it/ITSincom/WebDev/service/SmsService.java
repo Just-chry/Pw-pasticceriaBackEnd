@@ -29,8 +29,5 @@ public class SmsService {
                 new PhoneNumber(fromPhoneNumber), // Numero Twilio da cui inviare l'SMS
                 messageBody // Contenuto del messaggio
         ).create();
-
-        // Opzionalmente, stampa l'ID del messaggio per tracciare il risultato
-        System.out.println("SMS inviato con SID: " + message.getSid());
     }
 }

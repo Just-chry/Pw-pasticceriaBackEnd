@@ -1,16 +1,13 @@
 package it.ITSincom.WebDev.rest.resource;
 
-import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.AuthenticationService;
 import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
-import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Path("/user")
