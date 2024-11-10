@@ -1,6 +1,7 @@
 package it.ITSincom.WebDev.rest.resource;
 
 import it.ITSincom.WebDev.persistence.model.Order;
+import it.ITSincom.WebDev.rest.model.OrderItemRequest;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
 import it.ITSincom.WebDev.service.AuthenticationService;
 import it.ITSincom.WebDev.service.NotificationService;
@@ -9,7 +10,6 @@ import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
@@ -32,13 +32,26 @@ public class OrderResource {
     }
 
     @POST
-    @Path("/create")
-    public Response createOrder(@CookieParam("sessionId") String sessionId, OrderRequest orderRequest) {
+    @Path("/add")
+    public Response addToCart(@CookieParam("sessionId") String sessionId, OrderItemRequest itemRequest) {
         try {
             ValidationUtils.validateSessionId(sessionId);
-            Order newOrder = orderService.createOrder(sessionId, orderRequest);
-            notificationService.sendNewOrderNotificationToAdmin(newOrder);
-            return Response.ok(newOrder).build();
+            orderService.addToCart(sessionId, itemRequest);
+            return Response.ok("Prodotto aggiunto al carrello con successo.").build();
+        } catch (UserSessionNotFoundException e) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+    @POST
+    @Path("/create")
+    public Response createOrderFromCart(@CookieParam("sessionId") String sessionId, OrderRequest orderRequest) {
+        try {
+            ValidationUtils.validateSessionId(sessionId);
+            orderService.createOrderFromCart(sessionId, orderRequest);
+            return Response.ok("Ordine creato con successo.").build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         } catch (Exception e) {

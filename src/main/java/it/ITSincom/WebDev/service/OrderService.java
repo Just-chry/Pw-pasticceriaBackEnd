@@ -5,7 +5,10 @@ import it.ITSincom.WebDev.persistence.ProductRepository;
 import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.persistence.UserSessionRepository;
 import it.ITSincom.WebDev.persistence.model.*;
+import it.ITSincom.WebDev.rest.model.OrderItemRequest;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
+import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
+import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -69,92 +72,78 @@ public class OrderService {
         return userOrders;
     }
 
+    @Transactional
+    public void addToCart(String sessionId, OrderItemRequest itemRequest) throws Exception {
+        ValidationUtils.validateSessionId(sessionId);
+        Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
 
-    public boolean isPickupSlotTaken(LocalDateTime pickupDateTime) {
-        // Query the database to check if there is an existing order with the same pickup date and time
-        List<Order> existingOrders = orderRepository.find("pickupDateTime = ?1", pickupDateTime).list();
-        return !existingOrders.isEmpty();
-    }
+        String userId = optionalUserSession.get().getUser().getId();
+        Optional<Order> optionalCart = orderRepository.find("userId = ?1 and status = 'cart'", userId).firstResultOptional();
+        Order cart;
 
+        cart = optionalCart.orElseGet(() -> new Order(userId, null, null, new ArrayList<>(), "cart"));
 
-    public boolean isPickupTimeValid(LocalTime pickupTime) {
-        boolean isValidTimeRange = (pickupTime.isAfter(LocalTime.of(8, 59)) && pickupTime.isBefore(LocalTime.of(13, 1)))
-                || (pickupTime.isAfter(LocalTime.of(14, 59)) && pickupTime.isBefore(LocalTime.of(19, 1)));
+        // Check if the product exists
+        Optional<Product> productOptional = productRepository.findByIdOptional(itemRequest.getProductId());
+        if (productOptional.isEmpty()) {
+            throw new Exception("Prodotto non trovato per l'ID: " + itemRequest.getProductId());
+        }
 
-        boolean isValidSlot = pickupTime.getMinute() % 10 == 0;
+        Product product = productOptional.get();
+        if (product.getQuantity() < itemRequest.getQuantity()) {
+            throw new Exception("Quantità richiesta non disponibile per il prodotto: " + product.getName());
+        }
 
-        return isValidTimeRange && isValidSlot;
+        OrderItem newItem = new OrderItem(itemRequest.getProductId(), product.getName(), itemRequest.getQuantity(), product.getPrice());
+
+        // Add or update item in cart
+        List<OrderItem> items = cart.getProducts();
+        boolean itemUpdated = false;
+        for (OrderItem item : items) {
+            if (item.getProductId().equals(newItem.getProductId())) {
+                item.setQuantity(item.getQuantity() + newItem.getQuantity());
+                itemUpdated = true;
+                break;
+            }
+        }
+
+        if (!itemUpdated) {
+            items.add(newItem);
+        }
+
+        // Update product quantity in inventory
+        product.setQuantity(product.getQuantity() - newItem.getQuantity());
+        productRepository.persist(product);
+        // Update the cart
+        cart.setProducts(items);
+        orderRepository.persistOrUpdate(cart);
     }
 
 
     @Transactional
-    public Order createOrder(String sessionId, OrderRequest orderRequest) {
-        LocalDate pickupDate = orderRequest.getPickupDate();
-        LocalTime pickupTime = orderRequest.getPickupTime();
-
+    public void createOrderFromCart(String sessionId, OrderRequest orderRequest) throws Exception {
+        ValidationUtils.validateSessionId(sessionId);
         Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
-        if (optionalUserSession.isEmpty()) {
-            throw new IllegalArgumentException("Sessione non valida. Effettua il login.");
-        }
-        // Controllo se il giorno è lunedì (lunedì è chiuso)
-        if (pickupDate.getDayOfWeek().getValue() == 1) {
-            throw new IllegalArgumentException("Non è possibile effettuare un ordine di lunedì, siamo chiusi.");
-        }
-
-        // Controllo se l'orario è valido
-        if (!isPickupTimeValid(pickupTime)) {
-            throw new IllegalArgumentException("L'orario selezionato non è valido. Gli orari disponibili sono dalle 9:00 alle 13:00 e dalle 15:00 alle 19:00.");
-        }
-
-        // Controllo se l'orario di quel giorno è già stato prenotato
-        if (isPickupSlotTaken(LocalDateTime.of(pickupDate, pickupTime))) {
-            throw new IllegalArgumentException("L'orario selezionato non è disponibile. Scegli un altro orario.");
-        }
 
         String userId = optionalUserSession.get().getUser().getId();
-        // Crea e salva il nuovo ordine
-        Order order = new Order();
-        order.setUserId(userId);
-        order.setPickupDateTime(LocalDateTime.of(pickupDate, pickupTime));
-        order.setComments(orderRequest.getComments());
+        Optional<Order> optionalCart = orderRepository.find("userId = ?1 and status = 'cart'", userId).firstResultOptional();
 
-        // Convert OrderItemRequest to OrderItem
-        List<OrderItem> orderItems = orderRequest.getProducts().stream().map(orderItemRequest -> {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setProductId(orderItemRequest.getProductId());
-            orderItem.setQuantity(orderItemRequest.getQuantity());
+        if (optionalCart.isEmpty() || optionalCart.get().getProducts().isEmpty()) {
+            throw new Exception("Il carrello è vuoto. Aggiungi prodotti prima di creare un ordine.");
+        }
 
-            // Recupera i dettagli del prodotto dal database
-            Optional<Product> productOptional = productRepository.findByIdOptional(orderItemRequest.getProductId());
-            if (productOptional.isPresent()) {
-                Product product = productOptional.get();
-                // Controlla se la quantità richiesta è disponibile
-                if (product.getQuantity() < orderItemRequest.getQuantity()) {
-                    throw new IllegalArgumentException("Quantità insufficiente per il prodotto: " + product.getName());
-                }
+        LocalDateTime pickupDateTime = LocalDateTime.of(orderRequest.getPickupDate(), orderRequest.getPickupTime());
+        if (!isPickupTimeValid(orderRequest.getPickupTime()) || isPickupSlotTaken(pickupDateTime)) {
+            throw new Exception("La fascia oraria selezionata non è disponibile. Gli ordini possono essere fatti solo ogni 10 minuti dalle 9:00 alle 13:00 e dalle 15:00 alle 19:00.");
+        }
 
-                // Aggiorna la quantità disponibile del prodotto
-                product.setQuantity(product.getQuantity() - orderItemRequest.getQuantity());
-                productRepository.persist(product);
+        Order cart = optionalCart.get();
+        Order order = new Order(userId, pickupDateTime, orderRequest.getComments(), cart.getProducts(), "pending");
+        orderRepository.persist(order);
 
-                orderItem.setProductName(product.getName());
-                orderItem.setPrice(product.getPrice());
-            } else {
-                throw new IllegalArgumentException("Prodotto non trovato per l'ID: " + orderItemRequest.getProductId());
-            }
-
-            return orderItem;
-        }).collect(Collectors.toList());
-
-        order.setProducts(orderItems);
-        order.setStatus("pending");
-
-        // Salva l'ordine nel database
-        order.persist();
-
-        return order;
+        // Clear the cart after order is created by deleting it
+        orderRepository.delete(cart);
     }
-
 
     @Transactional
     public void acceptOrder(String orderId) throws Exception {
@@ -233,4 +222,23 @@ public class OrderService {
     public List<Order> getAllOrders() {
         return orderRepository.listAll();
     }
+
+    public boolean isPickupSlotTaken(LocalDateTime pickupDateTime) {
+        // Query the database to check if there is an existing order with the same pickup date and time
+        List<Order> existingOrders = orderRepository.find("pickupDateTime = ?1", pickupDateTime).list();
+        return !existingOrders.isEmpty();
+    }
+
+
+    public boolean isPickupTimeValid(LocalTime pickupTime) {
+        boolean isValidTimeRange = (pickupTime.isAfter(LocalTime.of(8, 59)) && pickupTime.isBefore(LocalTime.of(13, 1)))
+                || (pickupTime.isAfter(LocalTime.of(14, 59)) && pickupTime.isBefore(LocalTime.of(19, 1)));
+
+        boolean isValidSlot = pickupTime.getMinute() % 10 == 0;
+
+        return isValidTimeRange && isValidSlot;
+    }
+
+
+
 }

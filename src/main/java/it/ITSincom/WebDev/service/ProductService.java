@@ -57,7 +57,8 @@ public class ProductService {
                             product.getPrice(),
                             product.getCategory().name(),
                             ingredients,
-                            product.getQuantity() // Quantità solo per admin
+                            product.getQuantity(),
+                            product.getIsVisible()
                     );
                 })
                 .collect(Collectors.toList());
