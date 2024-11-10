@@ -1,17 +1,14 @@
 package it.ITSincom.WebDev.rest.resource;
 
 import it.ITSincom.WebDev.persistence.model.Order;
-import it.ITSincom.WebDev.rest.model.OrderRequest;
-import it.ITSincom.WebDev.service.AuthenticationService;
-import it.ITSincom.WebDev.service.NotificationService;
 import it.ITSincom.WebDev.service.OrderService;
-import it.ITSincom.WebDev.util.ValidationUtils;
-import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+
 
 @Path("/orders")
 @Produces(MediaType.APPLICATION_JSON)
@@ -61,11 +58,8 @@ public class OrderResource {
     @GET
     public Response getOrdersByUser(@CookieParam("sessionId") String sessionId) {
         try {
-            ValidationUtils.validateSessionId(sessionId);
             List<Order> userOrders = orderService.getUserOrders(sessionId);
             return Response.ok(userOrders).build();
-        } catch (UserSessionNotFoundException e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
