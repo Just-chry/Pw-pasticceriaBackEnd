@@ -7,6 +7,7 @@ import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
+import it.ITSincom.WebDev.rest.model.LoginResponse;
 import it.ITSincom.WebDev.service.exception.*;
 import it.ITSincom.WebDev.util.Validation;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -90,20 +91,31 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public String login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
+    public LoginResponse handleLogin(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
+        // Validazione della richiesta
         Validation.validateLoginRequest(request);
 
+        // Cerca l'utente nel database
         Optional<User> optionalUser = userRepository.findUserByEmailOrPhone(request.getEmailOrPhone());
         User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
+        // Controlla se l'utente ha verificato almeno un contatto
+        if (!user.getEmailVerified() && !user.getPhoneVerified()) {
+            throw new UnauthorizedAccessException("Contatto non verificato. Per favore, verifica il tuo indirizzo email o il tuo numero di telefono.");
+        }
+
+        // Verifica della password
         String hashedProvidedPassword = hashPassword(request.getPassword());
         if (!verifyPassword(user.getPassword(), hashedProvidedPassword)) {
             throw new WrongPasswordException("Password errata.");
         }
 
+        // Controlla se la sessione esiste già
         checkIfSessionExists(user.getId());
 
-        return createSession(user);
+        // Crea una nuova sessione
+        String sessionId = createSession(user);
+        return new LoginResponse("Login avvenuto con successo", user.getName(), sessionId);
     }
 
     @Transactional

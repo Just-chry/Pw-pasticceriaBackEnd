@@ -1,6 +1,8 @@
     package it.ITSincom.WebDev.rest.resource;
 
     import it.ITSincom.WebDev.persistence.model.Product;
+    import it.ITSincom.WebDev.persistence.model.User;
+    import it.ITSincom.WebDev.persistence.model.UserSession;
     import it.ITSincom.WebDev.rest.model.ProductResponse;
     import it.ITSincom.WebDev.service.ProductService;
     import it.ITSincom.WebDev.service.AuthenticationService;
@@ -32,10 +34,15 @@
         @GET
         @Path("/available")
         public Response getVisibleProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
-            Validation.validateSessionAndUser(sessionId);
+            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
+            User user = (userSession != null) ? userSession.getUser() : null;
+
+            Validation.validateSessionAndUser(sessionId, userSession, user);
+
             List<ProductResponse> productResponses = productService.getVisibleProducts();
             return Response.ok(productResponses).build();
         }
+
 
         @GET
         public Response getAllProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {

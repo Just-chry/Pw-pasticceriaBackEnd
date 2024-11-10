@@ -1,6 +1,7 @@
     package it.ITSincom.WebDev.rest.resource;
 
     import it.ITSincom.WebDev.persistence.model.User;
+    import it.ITSincom.WebDev.persistence.model.UserSession;
     import it.ITSincom.WebDev.rest.model.LoginRequest;
     import it.ITSincom.WebDev.rest.model.LoginResponse;
     import it.ITSincom.WebDev.service.SmsService;
@@ -68,35 +69,34 @@
         return authenticationService.verifyContact(token, contact);
     }
 
-    @POST
-    @Path("/login")
-    public Response login(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
-        // 1. Cerca l'utente nel database tramite email o telefono
-        Optional<User> optionalUser = authenticationService.findUserByEmailOrPhone(request.getEmailOrPhone());
-        User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
+        @POST
+        @Path("/login")
+        public Response login(LoginRequest request) {
+            try {
+                LoginResponse response = authenticationService.handleLogin(request);
 
-        if (!user.getEmailVerified() && !user.getPhoneVerified()) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Contatto non verificato. Per favore, verifica il tuo indirizzo email o il tuo numero di telefono.").build();
+                NewCookie sessionCookie = new NewCookie("sessionId", response.getSessionId(), "/", null, "Session Cookie", -1, false);
+                return Response.ok(response).cookie(sessionCookie).build();
+            } catch (UserNotFoundException | WrongPasswordException | SessionAlreadyExistsException e) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
+            }
         }
 
-        String sessionId = authenticationService.login(request);
-        LoginResponse response = new LoginResponse("Login avvenuto con successo", user.getName());
-        NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
 
-        return Response.ok(response).cookie(sessionCookie).build();
-    }
+        @DELETE
+        @Path("/logout")
+        public Response logout(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
+            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
+            if (userSession == null) {
+                throw new UserSessionNotFoundException("Sessione non valida");
+            }
+            authenticationService.logout(sessionId);
 
-    @DELETE
-    @Path("/logout")
-    public Response logout(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
-        // Utilizza ValidationUtils per validare l'ID della sessione
-        Validation.validateSessionAndUser(sessionId);
-        authenticationService.logout(sessionId);
-        NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", -1, false);
-        return Response.ok("Logout avvenuto con successo").cookie(expiredCookie).build();
-    }
+            NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", -1, false);
+            return Response.ok("Logout avvenuto con successo").cookie(expiredCookie).build();
+        }
 
-    private void sendVerificationEmail(User user, String verificationLink) {
+        private void sendVerificationEmail(User user, String verificationLink) {
         mailer.send(Mail.withHtml(user.getEmail(),
                 "Conferma la tua registrazione",
                 "<h1>Benvenuto " + user.getName() + " " + user.getSurname() + "!</h1>" +
