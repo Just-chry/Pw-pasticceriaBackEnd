@@ -91,8 +91,7 @@ public class ProductResource {
         return Response.ok("Prodotto con ID " + productId + " modificato con successo").build();
     }
 
-    private boolean validateAdminSession(String sessionId) throws UserSessionNotFoundException {
+    private void validateAdminSession(String sessionId) throws UserSessionNotFoundException {
         authenticationService.isAdmin(sessionId);
-        return true;
     }
 }
