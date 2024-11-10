@@ -3,6 +3,7 @@ package it.ITSincom.WebDev.rest.resource;
 import it.ITSincom.WebDev.persistence.model.Order;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.model.UserSession;
+import it.ITSincom.WebDev.rest.model.OrderItemRequest;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
 import it.ITSincom.WebDev.service.AuthenticationService;
 import it.ITSincom.WebDev.service.NotificationService;
@@ -13,6 +14,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import java.util.List;
 
 
@@ -33,19 +35,27 @@ public class OrderResource {
     }
 
     @POST
+    @Path("/add")
+    public Response addToCart(@CookieParam("sessionId") String sessionId, OrderItemRequest itemRequest) {
+        try {
+            validateSessionAndGetUser(sessionId);
+            orderService.addToCart(sessionId, itemRequest);
+            return Response.ok("Prodotto aggiunto al carrello con successo.").build();
+        } catch (UserSessionNotFoundException e) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+    @POST
     @Path("/create")
     public Response createOrderFromCart(@CookieParam("sessionId") String sessionId, OrderRequest orderRequest) {
         try {
-            // Recupero della UserSession e dell'utente
-            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
-            User user = (userSession != null) ? userSession.getUser() : null;
-
-            // Validazione del sessionId, della UserSession e dell'utente
-            Validation.validateSessionAndUser(sessionId, userSession, user);
-
-            Order newOrder = orderService.createOrder(sessionId, orderRequest); // Passa l'utente invece di sessionId
-            notificationService.sendNewOrderNotificationToAdmin(newOrder);
-            return Response.ok(newOrder).build();
+            validateSessionAndGetUser(sessionId);
+            Order order = orderService.createOrderFromCart(sessionId, orderRequest);
+            notificationService.sendNewOrderNotificationToAdmin(order);
+            return Response.ok("Ordine creato con successo.").build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -58,10 +68,7 @@ public class OrderResource {
     @Path("/cancel/{orderId}")
     public Response deleteOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
         try {
-            // Recupero della UserSession e dell'utente
-            UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
-            User user = (userSession != null) ? userSession.getUser() : null;
-            Validation.validateSessionAndUser(sessionId, userSession, user);
+            validateSessionAndGetUser(sessionId);
             orderService.deleteOrder(sessionId, orderId); // Passa l'utente invece del sessionId
             return Response.ok("Ordine cancellato con successo.").build();
         } catch (UserSessionNotFoundException e) {
@@ -74,6 +81,7 @@ public class OrderResource {
     @GET
     public Response getOrdersByUser(@CookieParam("sessionId") String sessionId) {
         try {
+            validateSessionAndGetUser(sessionId);
             List<Order> userOrders = orderService.getUserOrders(sessionId);
             return Response.ok(userOrders).build();
         } catch (Exception e) {
@@ -94,5 +102,17 @@ public class OrderResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
+
+    private User validateSessionAndGetUser(String sessionId) throws UserSessionNotFoundException {
+        // Recupera la UserSession e l'utente
+        UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
+        User user = (userSession != null) ? userSession.getUser() : null;
+
+        // Esegui la validazione della sessione e dell'utente
+        Validation.validateSessionAndUser(sessionId, userSession, user);
+
+        return user;
+    }
+
 
 }

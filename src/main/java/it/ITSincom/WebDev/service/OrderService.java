@@ -7,7 +7,6 @@ import it.ITSincom.WebDev.persistence.UserSessionRepository;
 import it.ITSincom.WebDev.persistence.model.*;
 import it.ITSincom.WebDev.rest.model.OrderItemRequest;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
-import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -72,7 +71,6 @@ public class OrderService {
 
     @Transactional
     public void addToCart(String sessionId, OrderItemRequest itemRequest) throws Exception {
-        ValidationUtils.validateSessionId(sessionId);
         Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
 
         String userId = optionalUserSession.get().getUser().getId();
@@ -127,7 +125,6 @@ public class OrderService {
 
     @Transactional
     public Order createOrderFromCart(String sessionId, OrderRequest orderRequest) throws Exception {
-        ValidationUtils.validateSessionId(sessionId);
         Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
 
         String userId = optionalUserSession.get().getUser().getId();
