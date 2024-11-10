@@ -7,6 +7,7 @@ import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.UserRepository;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
+import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.exception.*;
 import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,6 +16,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -186,7 +188,14 @@ public class AuthenticationService {
         return actualPassword != null && actualPassword.equals(providedPassword);
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.listAll();
+    public List<UserResponse> getAllUsers() {
+        List<User> users = userRepository.listAll();
+        List<UserResponse> userResponses = new ArrayList<>();
+
+        for (User user : users) {
+            UserResponse response = new UserResponse(user.getName(), user.getSurname(), user.getEmail(), user.getPhone());
+            userResponses.add(response);
+        }
+        return userResponses;
     }
 }
