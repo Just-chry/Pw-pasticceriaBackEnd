@@ -224,4 +224,8 @@ public class OrderService {
 
         return optionalOrder.get();
     }
+
+    public List<Order> getAllOrders() {
+        return orderRepository.listAll();
+    }
 }
