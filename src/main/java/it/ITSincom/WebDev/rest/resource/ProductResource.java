@@ -1,11 +1,11 @@
     package it.ITSincom.WebDev.rest.resource;
 
     import it.ITSincom.WebDev.persistence.model.Product;
+    import it.ITSincom.WebDev.rest.model.ProductAdminResponse;
     import it.ITSincom.WebDev.rest.model.ProductResponse;
     import it.ITSincom.WebDev.service.ProductService;
     import it.ITSincom.WebDev.service.AuthenticationService;
     import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
-    import it.ITSincom.WebDev.util.ValidationUtils;
     import jakarta.enterprise.context.ApplicationScoped;
     import jakarta.inject.Inject;
     import jakarta.ws.rs.*;
@@ -30,19 +30,16 @@
         }
 
         @GET
-        @Path("/available")
-        public Response getVisibleProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
-            ValidationUtils.validateSessionId(sessionId);
-            List<ProductResponse> productResponses = productService.getVisibleProducts();
-            return Response.ok(productResponses).build();
+        public Response getAllProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
+            if (validateAdminSession(sessionId)) {
+                List<ProductAdminResponse> productResponses = productService.getAllProductsForAdmin();
+                return Response.ok(productResponses).build();
+            } else {
+                List<ProductResponse> productResponses = productService.getAllProductsForUser();
+                return Response.ok(productResponses).build();
+            }
         }
 
-        @GET
-        public Response getAllProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
-            validateAdminSession(sessionId);
-            List<Product> productResponses = productService.getAllProducts();
-            return Response.ok(productResponses).build();
-        }
 
         @POST
         @Path("/add")
@@ -84,7 +81,8 @@
             return Response.ok("Prodotto con ID " + productId + " modificato con successo").build();
         }
 
-        private void validateAdminSession(String sessionId) throws UserSessionNotFoundException {
+        private boolean validateAdminSession(String sessionId) throws UserSessionNotFoundException {
             authenticationService.isAdmin(sessionId);
+            return true;
         }
     }

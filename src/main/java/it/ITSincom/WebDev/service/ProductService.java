@@ -4,6 +4,7 @@ import it.ITSincom.WebDev.persistence.IngredientRepository;
 import it.ITSincom.WebDev.persistence.ProductRepository;
 import it.ITSincom.WebDev.persistence.model.Ingredient;
 import it.ITSincom.WebDev.persistence.model.Product;
+import it.ITSincom.WebDev.rest.model.ProductAdminResponse;
 import it.ITSincom.WebDev.rest.model.ProductResponse;
 import it.ITSincom.WebDev.service.exception.InvalidProductException;
 import it.ITSincom.WebDev.service.exception.ProductNotFoundException;
@@ -26,13 +27,43 @@ public class ProductService {
         this.ingredientRepository = ingredientRepository;
     }
 
-    public List<Product> getAllProducts() {
-        List<Product> products = productRepository.listAll();
-        if (products == null || products.isEmpty()) {
-            throw new BadRequestException("Nessun prodotto trovato.");
-        }
-        return products;
+    public List<ProductResponse> getAllProductsForUser() {
+        List<Product> products = productRepository.findVisibleProducts();
+        return products.stream()
+                .map(product -> {
+                    List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
+                    return new ProductResponse(
+                            product.getName(),
+                            product.getDescription(),
+                            product.getImage(),
+                            product.getPrice(),
+                            product.getCategory().name(),
+                            ingredients
+                    );
+                })
+                .collect(Collectors.toList());
     }
+
+    public List<ProductAdminResponse> getAllProductsForAdmin() {
+        List<Product> products = productRepository.listAll();
+        return products.stream()
+                .map(product -> {
+                    List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
+                    return new ProductAdminResponse(
+                            product.getId(),
+                            product.getName(),
+                            product.getDescription(),
+                            product.getImage(),
+                            product.getPrice(),
+                            product.getCategory().name(),
+                            ingredients,
+                            product.getQuantity() // Quantità solo per admin
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+
 
     @Transactional
     public void addProduct(Product product) {
@@ -68,25 +99,41 @@ public class ProductService {
         Product product = getProductByIdOrThrow(productId);
         validateProductInput(updatedProduct); // Potresti adattare questo metodo per la modifica
         updateProductDetails(product, updatedProduct);
+        if (updatedProduct.getIngredientNames() != null) {
+            updateProductIngredients(product, updatedProduct.getIngredientNames());
+        }
     }
 
-    public List<ProductResponse> getVisibleProducts() {
-        List<Product> products = productRepository.findVisibleProducts();
-        // Converti i prodotti in `ProductResponse` e aggiungi gli ingredienti
-        return products.stream()
-                .map(product -> {
-                    List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
-                    return new ProductResponse(
-                            product.getName(),
-                            product.getDescription(),
-                            product.getImage(),
-                            product.getPrice(),
-                            product.getCategory().name(),
-                            ingredients
-                    );
-                })
+    @Transactional
+    public void updateProductIngredients(Product product, List<String> newIngredients) {
+        // Step 1: Retrieve current ingredients from the product
+        List<String> currentIngredients = productRepository.findIngredientNamesByProductId(product.getId());
+
+        // Step 2: Determine ingredients to add
+        List<String> ingredientsToAdd = newIngredients.stream()
+                .filter(ingredient -> !currentIngredients.contains(ingredient))
                 .collect(Collectors.toList());
+
+        // Step 3: Determine ingredients to remove
+        List<String> ingredientsToRemove = currentIngredients.stream()
+                .filter(ingredient -> !newIngredients.contains(ingredient))
+                .collect(Collectors.toList());
+
+        // Step 4: Add new ingredients if they don't exist
+        for (String ingredientName : ingredientsToAdd) {
+            Ingredient ingredient = getOrCreateIngredientByName(ingredientName);
+            productRepository.addIngredientToProduct(product.getId(), ingredient.getId());
+        }
+
+        // Step 5: Remove ingredients that are no longer needed
+        for (String ingredientName : ingredientsToRemove) {
+            Ingredient ingredient = ingredientRepository.find("name", ingredientName).firstResult();
+            if (ingredient != null) {
+                productRepository.removeIngredientFromProduct(product.getId(), ingredient.getId());
+            }
+        }
     }
+
 
     private Product getProductByIdOrThrow(String productId) {
         Product product = productRepository.findById(productId);
@@ -107,7 +154,6 @@ public class ProductService {
             throw new InvalidProductException("La quantità del prodotto non può essere negativa.");
         }
     }
-
 
     private void addIngredientsToProduct(Product product) {
         if (product.getIngredientNames() != null && !product.getIngredientNames().isEmpty()) {

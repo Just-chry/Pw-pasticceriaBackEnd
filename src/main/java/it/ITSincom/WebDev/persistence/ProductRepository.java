@@ -1,6 +1,7 @@
 package it.ITSincom.WebDev.persistence;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import it.ITSincom.WebDev.persistence.model.Ingredient;
 import it.ITSincom.WebDev.persistence.model.Product;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -29,5 +30,13 @@ public class ProductRepository implements PanacheRepositoryBase<Product, String>
                 .getResultList();
     }
 
+
+    public void removeIngredientFromProduct(String productId, String ingredientId) {
+        getEntityManager().createNativeQuery(
+                        "DELETE FROM product_ingredient WHERE product_id = :productId AND ingredient_id = :ingredientId")
+                .setParameter("productId", productId)
+                .setParameter("ingredientId", ingredientId)
+                .executeUpdate();
+    }
 
 }
