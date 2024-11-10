@@ -5,7 +5,7 @@
     import it.ITSincom.WebDev.rest.model.LoginResponse;
     import it.ITSincom.WebDev.service.SmsService;
     import it.ITSincom.WebDev.service.exception.*;
-    import it.ITSincom.WebDev.util.ValidationUtils;
+    import it.ITSincom.WebDev.util.Validation;
     import jakarta.inject.Inject;
     import jakarta.ws.rs.*;
     import jakarta.ws.rs.core.MediaType;
@@ -16,7 +16,7 @@
     import it.ITSincom.WebDev.service.AuthenticationService;
 
     import java.util.Optional;
-    import java.util.UUID;
+
     import io.quarkus.mailer.Mailer;
     import io.quarkus.mailer.Mail;
 
@@ -90,7 +90,7 @@
     @Path("/logout")
     public Response logout(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
         // Utilizza ValidationUtils per validare l'ID della sessione
-        ValidationUtils.validateSessionId(sessionId);
+        Validation.validateSessionAndUser(sessionId);
         authenticationService.logout(sessionId);
         NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", -1, false);
         return Response.ok("Logout avvenuto con successo").cookie(expiredCookie).build();

@@ -1,12 +1,15 @@
 package it.ITSincom.WebDev.util;
 
+import it.ITSincom.WebDev.persistence.model.User;
+import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.rest.model.CreateUserRequest;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
 import it.ITSincom.WebDev.service.exception.UserCreationException;
 import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import it.ITSincom.WebDev.service.exception.VerificationTokenInvalidException;
+import jakarta.persistence.EntityNotFoundException;
 
-public class ValidationUtils {
+public class Validation {
 
     public static void validateUserRequest(CreateUserRequest request) throws UserCreationException {
         if (request == null) {
@@ -20,11 +23,20 @@ public class ValidationUtils {
         }
     }
 
-    public static void validateSessionId(String sessionId) throws UserSessionNotFoundException {
+    public static void validateSessionAndUser(String sessionId, UserSession userSession, User user) throws UserSessionNotFoundException, EntityNotFoundException {
         if (sessionId == null || sessionId.isEmpty()) {
             throw new UserSessionNotFoundException("Sessione non trovata o non valida. Effettua il login.");
         }
+
+      if (userSession == null) {
+            throw new UserSessionNotFoundException("Sessione non valida. Effettua nuovamente il login.");
+        }
+
+        if (user == null) {
+            throw new EntityNotFoundException("Utente non trovato.");
+        }
     }
+
 
     public static void validateToken(String actualToken, String providedToken) throws VerificationTokenInvalidException {
         if (actualToken == null || !actualToken.equals(providedToken)) {

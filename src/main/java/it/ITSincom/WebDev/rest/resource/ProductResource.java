@@ -5,7 +5,7 @@
     import it.ITSincom.WebDev.service.ProductService;
     import it.ITSincom.WebDev.service.AuthenticationService;
     import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
-    import it.ITSincom.WebDev.util.ValidationUtils;
+    import it.ITSincom.WebDev.util.Validation;
     import jakarta.enterprise.context.ApplicationScoped;
     import jakarta.inject.Inject;
     import jakarta.ws.rs.*;
@@ -32,7 +32,7 @@
         @GET
         @Path("/available")
         public Response getVisibleProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
-            ValidationUtils.validateSessionId(sessionId);
+            Validation.validateSessionAndUser(sessionId);
             List<ProductResponse> productResponses = productService.getVisibleProducts();
             return Response.ok(productResponses).build();
         }
