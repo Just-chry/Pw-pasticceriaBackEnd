@@ -81,7 +81,7 @@
 
         String sessionId = authenticationService.login(request);
         LoginResponse response = new LoginResponse("Login avvenuto con successo", user.getName());
-        NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", 3600, false);
+        NewCookie sessionCookie = new NewCookie("sessionId", sessionId, "/", null, "Session Cookie", -1, false);
 
         return Response.ok(response).cookie(sessionCookie).build();
     }
