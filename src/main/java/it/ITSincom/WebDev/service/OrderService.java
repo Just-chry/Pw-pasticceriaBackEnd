@@ -78,9 +78,14 @@ public class OrderService {
 
 
     public boolean isPickupTimeValid(LocalTime pickupTime) {
-        return (pickupTime.isAfter(LocalTime.of(8, 59)) && pickupTime.isBefore(LocalTime.of(13, 1))) ||
-                (pickupTime.isAfter(LocalTime.of(14, 59)) && pickupTime.isBefore(LocalTime.of(19, 1)));
+        boolean isValidTimeRange = (pickupTime.isAfter(LocalTime.of(8, 59)) && pickupTime.isBefore(LocalTime.of(13, 1)))
+                || (pickupTime.isAfter(LocalTime.of(14, 59)) && pickupTime.isBefore(LocalTime.of(19, 1)));
+
+        boolean isValidSlot = pickupTime.getMinute() % 10 == 0;
+
+        return isValidTimeRange && isValidSlot;
     }
+
 
     @Transactional
     public Order createOrder(String sessionId, OrderRequest orderRequest) {
