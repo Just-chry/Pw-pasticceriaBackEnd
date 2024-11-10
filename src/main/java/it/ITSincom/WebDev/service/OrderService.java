@@ -7,7 +7,6 @@ import it.ITSincom.WebDev.persistence.UserSessionRepository;
 import it.ITSincom.WebDev.persistence.model.*;
 import it.ITSincom.WebDev.rest.model.OrderItemRequest;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
-import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import it.ITSincom.WebDev.util.ValidationUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -18,7 +17,6 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class OrderService {
@@ -79,12 +77,17 @@ public class OrderService {
 
         String userId = optionalUserSession.get().getUser().getId();
         Optional<Order> optionalCart = orderRepository.find("userId = ?1 and status = 'cart'", userId).firstResultOptional();
-        Order cart;
-
-        cart = optionalCart.orElseGet(() -> new Order(userId, null, null, new ArrayList<>(), "cart"));
+        Order cart = optionalCart.orElseGet(() -> {
+            Order newCart = new Order(userId, null, null, new ArrayList<>(), "cart");
+            orderRepository.persist(newCart);
+            return newCart;
+        });
 
         // Check if the product exists
         Optional<Product> productOptional = productRepository.findByIdOptional(itemRequest.getProductId());
+        if (productOptional.isPresent() && !productOptional.get().getIsVisible()) {
+            throw new Exception("Il prodotto non è disponibile per l'acquisto: " + itemRequest.getProductId());
+        }
         if (productOptional.isEmpty()) {
             throw new Exception("Prodotto non trovato per l'ID: " + itemRequest.getProductId());
         }
@@ -114,14 +117,16 @@ public class OrderService {
         // Update product quantity in inventory
         product.setQuantity(product.getQuantity() - newItem.getQuantity());
         productRepository.persist(product);
+
         // Update the cart
         cart.setProducts(items);
-        orderRepository.persistOrUpdate(cart);
+        orderRepository.update(cart);
     }
 
 
+
     @Transactional
-    public void createOrderFromCart(String sessionId, OrderRequest orderRequest) throws Exception {
+    public Order createOrderFromCart(String sessionId, OrderRequest orderRequest) throws Exception {
         ValidationUtils.validateSessionId(sessionId);
         Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
 
@@ -143,6 +148,7 @@ public class OrderService {
 
         // Clear the cart after order is created by deleting it
         orderRepository.delete(cart);
+        return order;
     }
 
     @Transactional

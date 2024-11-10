@@ -64,13 +64,19 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-
-
     @Transactional
     public void addProduct(Product product) {
         validateProductInput(product);
         productRepository.persist(product);
         addIngredientsToProduct(product);
+    }
+    @Transactional
+    public void addProducts(List<Product> products) {
+        for (Product product : products) {
+            validateProductInput(product);
+            productRepository.persist(product);
+            addIngredientsToProduct(product);
+        }
     }
 
     @Transactional

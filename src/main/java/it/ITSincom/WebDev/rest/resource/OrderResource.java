@@ -50,7 +50,8 @@ public class OrderResource {
     public Response createOrderFromCart(@CookieParam("sessionId") String sessionId, OrderRequest orderRequest) {
         try {
             ValidationUtils.validateSessionId(sessionId);
-            orderService.createOrderFromCart(sessionId, orderRequest);
+            Order order = orderService.createOrderFromCart(sessionId, orderRequest);
+            notificationService.sendNewOrderNotificationToAdmin(order);
             return Response.ok("Ordine creato con successo.").build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
@@ -58,6 +59,7 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+
 
     @DELETE
     @Path("/cancel/{orderId}")

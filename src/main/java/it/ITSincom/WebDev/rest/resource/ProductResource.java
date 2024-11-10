@@ -43,13 +43,20 @@ public class ProductResource {
         }
     }
 
-
     @POST
     @Path("/add")
     public Response addProduct(@CookieParam("sessionId") String sessionId, Product product) throws UserSessionNotFoundException {
         validateAdminSession(sessionId);
         productService.addProduct(product);
         return Response.status(Response.Status.CREATED).entity("Prodotto aggiunto con successo").build();
+    }
+
+    @POST
+    @Path("/add-multiple")
+    public Response addProducts(@CookieParam("sessionId") String sessionId, List<Product> products) throws UserSessionNotFoundException {
+        validateAdminSession(sessionId);
+        productService.addProducts(products);
+        return Response.status(Response.Status.CREATED).entity("Prodotti aggiunti con successo").build();
     }
 
     @DELETE

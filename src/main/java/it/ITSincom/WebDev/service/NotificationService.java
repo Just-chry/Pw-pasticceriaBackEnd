@@ -70,7 +70,7 @@ public class NotificationService {
     }
 
     public void sendNewOrderNotificationToAdmin(Order order) {
-        String adminEmail = "fabiogiannico3@gmail.com";
+        String adminEmail = "chrychen.acmilan@gmail.com";
         // Costruisci i dettagli dei prodotti
         StringBuilder productDetails = new StringBuilder();
         for (OrderItem item : order.getProducts()) {
@@ -88,6 +88,5 @@ public class NotificationService {
         mailer.send(Mail.withText(adminEmail, "Nuovo Ordine Ricevuto", message));
         System.out.println("Notifica inviata a Giacomo: " + adminEmail);
     }
-
 
 }
