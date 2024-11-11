@@ -64,6 +64,7 @@ public class OrderResource {
     }
 
 
+
     @DELETE
     @Path("/cancel/{orderId}")
     public Response deleteOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
@@ -78,10 +79,10 @@ public class OrderResource {
         }
     }
 
+
     @GET
     public Response getOrdersByUser(@CookieParam("sessionId") String sessionId) {
         try {
-            validateSessionAndGetUser(sessionId);
             List<Order> userOrders = orderService.getUserOrders(sessionId);
             return Response.ok(userOrders).build();
         } catch (Exception e) {
@@ -114,5 +115,21 @@ public class OrderResource {
         return user;
     }
 
+
+    @PUT
+    @Path("/accept/{orderId}")
+    public Response acceptOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
+        try {
+            authenticationService.isAdmin(sessionId);
+            orderService.acceptOrder(orderId);
+            User user = orderService.getUserByOrderId(orderId);
+
+            notificationService.sendOrderAcceptedNotification(user, orderId);
+
+            return Response.ok("Ordine accettato con successo e notifica inviata.").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
 
 }

@@ -1,6 +1,8 @@
 package it.ITSincom.WebDev.service;
 
 
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.Mailer;
 import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.persistence.UserSessionRepository;
 import it.ITSincom.WebDev.rest.model.CreateUserRequest;
@@ -28,12 +30,16 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final HashCalculator hashCalculator;
     private final UserSessionRepository userSessionRepository;
+    private final Mailer mailer;
+    private final SmsService smsService;
 
     @Inject
-    public AuthenticationService(UserRepository userRepository, HashCalculator hashCalculator, UserSessionRepository userSessionRepository) {
+    public AuthenticationService(UserRepository userRepository, HashCalculator hashCalculator, UserSessionRepository userSessionRepository, Mailer mailer, SmsService smsService) {
         this.userRepository = userRepository;
         this.hashCalculator = hashCalculator;
         this.userSessionRepository = userSessionRepository;
+        this.mailer = mailer;
+        this.smsService = smsService;
     }
 
     @Transactional
@@ -194,14 +200,41 @@ public class AuthenticationService {
         return actualPassword != null && actualPassword.equals(providedPassword);
     }
 
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.listAll();
+    public void sendVerificationEmail(User user, String verificationLink) {
+        mailer.send(Mail.withHtml(user.getEmail(),
+                "Conferma la tua registrazione",
+                "<h1>Benvenuto " + user.getName() + " " + user.getSurname() + "!</h1>" +
+                        "<p>Per favore, clicca sul link seguente per verificare il tuo indirizzo email:</p>" +
+                        "<a href=\"" + verificationLink + "\">Verifica la tua email</a>"));
+    }
+
+    public void sendVerificationSms(User user) throws UserCreationException {
+        String otp = user.getVerificationTokenPhone();
+        try {
+            smsService.sendSms(user.getPhone(), "Il tuo codice OTP è: " + otp);
+        } catch (SmsSendingException e) {
+            throw new UserCreationException("Errore durante l'invio dell'OTP: " + e.getMessage());
+        }
+    }
+
+    public List<UserResponse> getAllUserResponses() {
+        List<User> users = getAllUsers(); // Ottieni tutti gli utenti
         List<UserResponse> userResponses = new ArrayList<>();
 
         for (User user : users) {
-            UserResponse response = new UserResponse(user.getName(), user.getSurname(), user.getEmail(), user.getPhone());
+            // Converte ogni User in un UserResponse
+            UserResponse response = new UserResponse(
+                    user.getName(),
+                    user.getSurname(),
+                    user.getEmail(),
+                    user.getPhone()
+            );
             userResponses.add(response);
         }
+
         return userResponses;
+    }
+    public List<User> getAllUsers() {
+        return userRepository.findAll().list();
     }
 }
