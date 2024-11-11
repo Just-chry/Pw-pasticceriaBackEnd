@@ -36,14 +36,11 @@ public class OrderResource {
     @Path("/create")
     public Response createOrder(@CookieParam("sessionId") String sessionId, OrderRequest orderRequest) {
         try {
-            // Recupero della UserSession e dell'utente
             UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
             User user = (userSession != null) ? userSession.getUser() : null;
-
-            // Validazione del sessionId, della UserSession e dell'utente
             Validation.validateSessionAndUser(sessionId, userSession, user);
 
-            Order newOrder = orderService.createOrder(sessionId, orderRequest); // Passa l'utente invece di sessionId
+            Order newOrder = orderService.createOrder(sessionId, orderRequest);
             notificationService.sendNewOrderNotificationToAdmin(newOrder);
             return Response.ok(newOrder).build();
         } catch (UserSessionNotFoundException e) {
@@ -59,7 +56,6 @@ public class OrderResource {
     @Path("/cancel/{orderId}")
     public Response deleteOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
         try {
-            // Recupero della UserSession e dell'utente
             UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
             User user = (userSession != null) ? userSession.getUser() : null;
             Validation.validateSessionAndUser(sessionId, userSession, user);
@@ -94,6 +90,22 @@ public class OrderResource {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+
+    @PUT
+    @Path("/accept/{orderId}")
+    public Response acceptOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
+        try {
+            authenticationService.isAdmin(sessionId);
+            orderService.acceptOrder(orderId);
+            User user = orderService.getUserByOrderId(orderId);
+
+            notificationService.sendOrderAcceptedNotification(user, orderId);
+
+            return Response.ok("Ordine accettato con successo e notifica inviata.").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
 

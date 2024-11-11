@@ -46,7 +46,7 @@
 
         @GET
         public Response getAllProducts(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
-            validateAdminSession(sessionId);
+            authenticationService.isAdmin(sessionId);
             List<Product> productResponses = productService.getAllProducts();
             return Response.ok(productResponses).build();
         }
@@ -54,7 +54,7 @@
         @POST
         @Path("/add")
         public Response addProduct(@CookieParam("sessionId") String sessionId, Product product) throws UserSessionNotFoundException {
-            validateAdminSession(sessionId);
+            authenticationService.isAdmin(sessionId);
             productService.addProduct(product);
             return Response.status(Response.Status.CREATED).entity("Prodotto aggiunto con successo").build();
         }
@@ -62,7 +62,7 @@
         @DELETE
         @Path("/{id}")
         public Response deleteProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) throws UserSessionNotFoundException {
-            validateAdminSession(sessionId);
+            authenticationService.isAdmin(sessionId);
             productService.deleteProduct(productId);
             return Response.ok("Prodotto con ID " + productId + " rimosso con successo").build();
         }
@@ -70,7 +70,7 @@
         @DELETE
         @Path("/{id}/decrement")
         public Response decrementProductQuantity(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) throws UserSessionNotFoundException {
-            validateAdminSession(sessionId);
+            authenticationService.isAdmin(sessionId);
             productService.decrementProductQuantity(productId);
             return Response.ok("Quantità del Prodotto: " + productId + " decrementata di 1").build();
         }
@@ -78,7 +78,7 @@
         @PUT
         @Path("/{id}/increment")
         public Response incrementProductQuantity(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) throws UserSessionNotFoundException {
-            validateAdminSession(sessionId);
+            authenticationService.isAdmin(sessionId);
             productService.incrementProductQuantity(productId);
             return Response.ok("Quantità del Prodotto: " + productId + " incrementata di 1").build();
         }
@@ -86,12 +86,10 @@
         @PUT
         @Path("/{id}")
         public Response modifyProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId, Product updatedProduct) throws UserSessionNotFoundException {
-            validateAdminSession(sessionId);
+            authenticationService.isAdmin(sessionId);
             productService.modifyProduct(productId, updatedProduct);
             return Response.ok("Prodotto con ID " + productId + " modificato con successo").build();
         }
 
-        private void validateAdminSession(String sessionId) throws UserSessionNotFoundException {
-            authenticationService.isAdmin(sessionId);
-        }
+
     }
