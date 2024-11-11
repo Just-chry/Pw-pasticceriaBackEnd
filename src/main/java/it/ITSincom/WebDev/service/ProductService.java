@@ -13,6 +13,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -204,6 +205,52 @@ public class ProductService {
         if (updatedProduct.getCategory() != null) {
             product.setCategory(updatedProduct.getCategory());
         }
+    }
+
+
+    public List<ProductAdminResponse> getProductsByCategoryForAdmin(String category) {
+        // Recupera tutti i prodotti appartenenti alla categoria specificata, con dettagli amministrativi.
+        // Questo metodo dovrebbe essere utilizzato dagli amministratori per visualizzare informazioni più dettagliate sui prodotti.
+        List<Product> products = productRepository.findByCategory(category);
+        List<ProductAdminResponse> productAdminResponses = new ArrayList<>();
+
+        for (Product product : products) {
+            ProductAdminResponse response = new ProductAdminResponse(
+                    product.getId(),
+                    product.getName(),
+                    product.getDescription(),
+                    product.getImage(),
+                    product.getPrice(),
+                    product.getCategory().name(),
+                    product.getIngredientNames(),
+                    product.getQuantity(),
+                    product.getIsVisible()
+            );
+            productAdminResponses.add(response);
+        }
+
+        return productAdminResponses;
+    }
+
+    public List<ProductResponse> getProductsByCategoryForUser(String category) {
+        // Recupera tutti i prodotti appartenenti alla categoria specificata, con informazioni limitate.
+        // Questo metodo dovrebbe essere utilizzato dagli utenti normali per visualizzare informazioni di base sui prodotti.
+        List<Product> products = productRepository.findByCategory(category);
+        List<ProductResponse> productResponses = new ArrayList<>();
+
+        for (Product product : products) {
+            ProductResponse response = new ProductResponse(
+                    product.getName(),
+                    product.getDescription(),
+                    product.getImage(),
+                    product.getPrice(),
+                    product.getCategory().name(),
+                    product.getIngredientNames()
+            );
+            productResponses.add(response);
+        }
+
+        return productResponses;
     }
 
 }

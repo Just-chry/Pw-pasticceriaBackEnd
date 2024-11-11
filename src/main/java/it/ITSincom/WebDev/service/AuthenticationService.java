@@ -140,13 +140,14 @@ public class AuthenticationService {
         userSessionRepository.delete(optionalSession.get());
     }
 
-    public void isAdmin(String sessionId) throws UserSessionNotFoundException, UnauthorizedAccessException {
+    public boolean isAdmin(String sessionId) throws UserSessionNotFoundException, UnauthorizedAccessException {
         UserSession session = findUserSessionBySessionId(sessionId);
         User user = (session != null) ? session.getUser() : null;
         Validation.validateSessionAndUser(sessionId, session, user);
         if (!"admin".equalsIgnoreCase(user.getRole())) {
             throw new UnauthorizedAccessException("Accesso non autorizzato: l'utente non è un amministratore");
         }
+        return false;
     }
 
     private void checkIfEmailOrPhoneExists(CreateUserRequest request) throws UserCreationException {

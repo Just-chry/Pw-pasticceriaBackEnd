@@ -260,12 +260,7 @@ public class OrderService {
 
     @Transactional
     public void deleteProductFromCart(String sessionId, String productId) throws Exception {
-        ValidationUtils.validateSessionId(sessionId);
         Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
-
-        if (optionalUserSession.isEmpty()) {
-            throw new Exception("Sessione non valida. Effettua il login.");
-        }
 
         String userId = optionalUserSession.get().getUser().getId();
         Optional<Order> optionalCart = orderRepository.find("userId = ?1 and status = 'cart'", userId).firstResultOptional();

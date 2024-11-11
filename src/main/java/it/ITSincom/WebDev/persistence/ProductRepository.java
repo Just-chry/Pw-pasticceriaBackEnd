@@ -6,6 +6,7 @@ import it.ITSincom.WebDev.persistence.model.Product;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ProductRepository implements PanacheRepositoryBase<Product, String> {
@@ -37,6 +38,14 @@ public class ProductRepository implements PanacheRepositoryBase<Product, String>
                 .setParameter("productId", productId)
                 .setParameter("ingredientId", ingredientId)
                 .executeUpdate();
+    }
+
+    public List<Product> findByCategory(String category) {
+        // Recupera tutti i prodotti appartenenti alla categoria specificata.
+        // Questo metodo dovrebbe fare una query al database per ottenere i prodotti.
+        return findAll().stream()
+                .filter(product -> product.getCategory().name().equalsIgnoreCase(category))
+                .collect(Collectors.toList());
     }
 
 }

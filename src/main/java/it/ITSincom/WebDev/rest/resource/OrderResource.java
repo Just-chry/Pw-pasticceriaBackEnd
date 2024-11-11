@@ -51,7 +51,7 @@ public class OrderResource {
     @Path("/delete/{productId}")
     public Response deleteProductFromCart(@CookieParam("sessionId") String sessionId, @PathParam("productId") String productId) {
         try {
-            ValidationUtils.validateSessionId(sessionId);
+            validateSessionAndGetUser(sessionId);
             orderService.deleteProductFromCart(sessionId, productId);
             return Response.ok("Prodotto rimosso dal carrello con successo.").build();
         } catch (UserSessionNotFoundException e) {
