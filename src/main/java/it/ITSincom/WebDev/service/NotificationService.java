@@ -14,10 +14,12 @@ import java.time.format.DateTimeFormatter;
 @ApplicationScoped
 public class NotificationService {
 
+    private static final String ADMIN_EMAIL = "chrychen.acmilan@gmail.com";
+
     private final Mailer mailer;
     private final SmsService smsService;
     private final OrderService orderService;
-    private final ProductRepository productRepository; // Modifica in base alla tua implementazione
+    private final ProductRepository productRepository;
 
     @Inject
     public NotificationService(Mailer mailer, SmsService smsService, OrderService orderService, ProductRepository productRepository) {
@@ -27,26 +29,16 @@ public class NotificationService {
         this.productRepository = productRepository;
     }
 
-
     public void sendOrderAcceptedNotification(User user, String orderId) throws Exception {
-        // Recupera i dettagli dell'ordine
-        Order order = orderService.getOrder(orderId); // Assicurati di avere questo metodo in OrderService
-        StringBuilder productDetails = new StringBuilder();
-
-        for (OrderItem item : order.getProducts()) {
-            productDetails.append(item.getQuantity())
-                    .append("x ")
-                    .append(item.getProductName())
-                    .append("<br>");
-        }
+        Order order = orderService.getOrder(orderId);
+        String productDetails = buildProductDetails(order);
 
         String message = "Il tuo ordine alla Pasticceria C'est La Vie è stato accettato con successo!<br><br>"
                 + "Dettagli dell'ordine:<br>"
-                + productDetails.toString()
+                + productDetails
                 + "<br>Orario di ritiro: " + order.getPickupDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'alle' HH:mm")) + "<br>"
                 + "Grazie per aver ordinato da noi!";
 
-        // Invia la notifica via email se l'utente ha un'email
         if (user.getEmail() != null && !user.getEmail().isEmpty()) {
             mailer.send(Mail.withHtml(
                     user.getEmail(),
@@ -61,22 +53,33 @@ public class NotificationService {
     }
 
     public void sendNewOrderNotificationToAdmin(Order order) {
-        String adminEmail = "chrychen.acmilan@gmail.com";
-        // Costruisci i dettagli dei prodotti
+        String productDetails = buildProductDetails(order);
+        String message = "Un nuovo ordine è stato effettuato:\n"
+                + "Dettagli dell'ordine:\n"
+                + productDetails
+                + "\nOrario di ritiro: " + order.getPickupDateTime();
+
+        mailer.send(Mail.withText(ADMIN_EMAIL, "Nuovo Ordine Ricevuto", message));
+    }
+
+    public void sendOrderCancelledNotificationToAdmin(Order order) {
+        String productDetails = buildProductDetails(order);
+        String message = "Un ordine è stato cancellato:\n"
+                + "Dettagli dell'ordine:\n"
+                + productDetails
+                + "\nOrario di ritiro previsto: " + order.getPickupDateTime();
+
+        mailer.send(Mail.withText(ADMIN_EMAIL, "Ordine Cancellato", message));
+    }
+
+    // Metodo privato per costruire i dettagli dei prodotti
+    private String buildProductDetails(Order order) {
         StringBuilder productDetails = new StringBuilder();
         for (OrderItem item : order.getProducts()) {
-            // Supponendo che tu possa ottenere il nome del prodotto usando un metodo del repository
-            String productName = productRepository.findById(item.getProductId()).getName(); // Modifica in base alla tua implementazione
+            String productName = productRepository.findById(item.getProductId()).getName();
             productDetails.append("Nome prodotto: ").append(productName)
                     .append(", Quantità: ").append(item.getQuantity()).append("\n");
         }
-        // Messaggio con i dettagli dei prodotti
-        String message = "Un nuovo ordine è stato effettuato:\n"
-                + "Dettagli dell'ordine:\n"
-                + productDetails.toString()
-                + "\nOrario di ritiro: " + order.getPickupDateTime();
-        // Invia notifica via email
-        mailer.send(Mail.withText(adminEmail, "Nuovo Ordine Ricevuto", message));
+        return productDetails.toString();
     }
 }
-

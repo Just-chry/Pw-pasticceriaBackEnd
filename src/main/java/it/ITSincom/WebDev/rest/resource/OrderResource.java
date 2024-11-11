@@ -71,6 +71,8 @@ public class OrderResource {
         try {
             validateSessionAndGetUser(sessionId);
             orderService.deleteOrder(sessionId, orderId); // Passa l'utente invece del sessionId
+            Order order = orderService.getOrder(orderId);
+            notificationService.sendOrderCancelledNotificationToAdmin(order);
             return Response.ok("Ordine cancellato con successo.").build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
