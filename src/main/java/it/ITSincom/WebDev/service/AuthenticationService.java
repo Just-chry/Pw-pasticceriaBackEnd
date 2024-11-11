@@ -44,6 +44,7 @@ public class AuthenticationService {
 
     @Transactional
     public User register(CreateUserRequest request) throws UserCreationException {
+        // Prima validazione della richiesta
         Validation.validateUserRequest(request);
         checkIfEmailOrPhoneExists(request);
 
@@ -53,8 +54,12 @@ public class AuthenticationService {
         user.setSurname(request.getSurname());
         user.setPassword(hashPassword(request.getPassword()));
         user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
+        // Imposta il telefono solo se non è vuoto
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            user.setPhone(request.getPhone());
+        }
 
+        // Genera token di verifica solo se i contatti sono validi
         if (user.getEmail() != null && !user.getEmail().isEmpty()) {
             user.setVerificationTokenEmail(UUID.randomUUID().toString());
         } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
@@ -64,6 +69,8 @@ public class AuthenticationService {
         userRepository.persist(user);
         return user;
     }
+
+
 
     @Transactional
     public Response verifyContact(String token, String contact) {
@@ -143,17 +150,28 @@ public class AuthenticationService {
     }
 
     private void checkIfEmailOrPhoneExists(CreateUserRequest request) throws UserCreationException {
-        boolean emailInUse = request.getEmail() != null && userRepository.findByEmail(request.getEmail()).isPresent();
-        boolean phoneInUse = request.getPhone() != null && userRepository.findByPhone(request.getPhone()).isPresent();
+        String email = request.getEmail();
+        String phone = request.getPhone();
 
-        if (emailInUse && phoneInUse) {
-            throw new UserCreationException("Sia l'email che il numero di telefono sono già in uso.");
-        } else if (emailInUse) {
-            throw new UserCreationException("L'email è già in uso.");
-        } else if (phoneInUse) {
-            throw new UserCreationException("Il numero di telefono è già in uso.");
+        if (email != null && !email.trim().isEmpty()) {
+            boolean emailInUse = userRepository.findByEmail(email).isPresent();
+            if (emailInUse) {
+                throw new UserCreationException("L'email è già in uso.");
+            }
+        }
+
+        // Verifica solo se phone non è vuoto o null
+        if (phone != null && !phone.trim().isEmpty()) {
+            boolean phoneInUse = userRepository.findByPhone(phone).isPresent();
+            if (phoneInUse) {
+                throw new UserCreationException("Il numero di telefono è già in uso.");
+            }
         }
     }
+
+
+
+
 
     private String createSession(User user) {
         String sessionId = UUID.randomUUID().toString();
