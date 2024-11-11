@@ -194,9 +194,23 @@ public class OrderService {
     }
 
     public User getUserByOrderId(String orderId) throws Exception {
-        // Convert the orderId from String to ObjectId
+        // Recupera l'ordine
         Order order = getOrder(orderId);
+        if (order == null) {
+            throw new Exception("Ordine non trovato con ID: " + orderId);
+        }
+
+        // Controlla se l'ID dell'utente è nullo o vuoto
         String userId = order.getUserId();
+        if (userId == null || userId.isEmpty()) {
+            throw new Exception("ID dell'utente associato all'ordine è nullo o vuoto per l'ordine con ID: " + orderId);
+        }
+
+        // Log per debug
+        System.out.println("Order ID: " + orderId);
+        System.out.println("User ID: " + userId);
+
+        // Cerca l'utente nel database
         Optional<User> optionalUser = userRepository.findByIdOptional(userId);
         if (optionalUser.isEmpty()) {
             throw new Exception("Utente non trovato per l'ordine con ID: " + orderId);
@@ -204,6 +218,7 @@ public class OrderService {
 
         return optionalUser.get();
     }
+
 
     public Order getOrder(String orderId) throws Exception {
         ObjectId objectId;

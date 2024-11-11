@@ -53,17 +53,10 @@ public class NotificationService {
                     "Ordine Accettato",
                     "<p>" + message + "</p>"
             ));
-        }
-
-        // Invia la notifica via SMS se l'utente ha un numero di telefono
-        if (user.getPhone() != null && !user.getPhone().isEmpty()) {
-            try {
-                String smsMessage = "Il tuo ordine alla Pasticceria C'est La Vie è stato accettato con successo! "
-                        + "Ritira il tuo ordine il " + order.getPickupDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'alle' HH:mm")) + ".";
-                smsService.sendSms(user.getPhone(), smsMessage);
-            } catch (Exception e) {
-                throw new Exception("Nessun ordine trovato per l'utente.");
-            }
+        } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            String smsMessage = "Il tuo ordine alla Pasticceria C'est La Vie è stato accettato con successo! "
+                    + "Ritira il tuo ordine il " + order.getPickupDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'alle' HH:mm")) + ".";
+            smsService.sendSms(user.getPhone(), smsMessage);
         }
     }
 
@@ -85,5 +78,5 @@ public class NotificationService {
         // Invia notifica via email
         mailer.send(Mail.withText(adminEmail, "Nuovo Ordine Ricevuto", message));
     }
-
 }
+
