@@ -246,5 +246,50 @@ public class OrderService {
     }
 
 
+    @Transactional
+    public void deleteProductFromCart(String sessionId, String productId) throws Exception {
+        ValidationUtils.validateSessionId(sessionId);
+        Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
+
+        if (optionalUserSession.isEmpty()) {
+            throw new Exception("Sessione non valida. Effettua il login.");
+        }
+
+        String userId = optionalUserSession.get().getUser().getId();
+        Optional<Order> optionalCart = orderRepository.find("userId = ?1 and status = 'cart'", userId).firstResultOptional();
+
+        if (optionalCart.isEmpty()) {
+            throw new Exception("Carrello non trovato.");
+        }
+
+        Order cart = optionalCart.get();
+        List<OrderItem> items = cart.getProducts();
+        boolean productFound = false;
+
+        for (OrderItem item : items) {
+            if (item.getProductId().equals(productId)) {
+                // Restore the product quantity in the inventory
+                Optional<Product> productOptional = productRepository.findByIdOptional(productId);
+                if (productOptional.isPresent()) {
+                    Product product = productOptional.get();
+                    product.setQuantity(product.getQuantity() + item.getQuantity());
+                    productRepository.persist(product);
+                } else {
+                    throw new Exception("Prodotto non trovato per l'ID: " + productId);
+                }
+                items.remove(item);
+                productFound = true;
+                break;
+            }
+        }
+
+        if (!productFound) {
+            throw new Exception("Prodotto non trovato nel carrello.");
+        }
+
+        // Update the cart
+        cart.setProducts(items);
+        orderRepository.update(cart);
+    }
 
 }
