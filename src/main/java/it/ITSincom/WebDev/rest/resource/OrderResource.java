@@ -47,6 +47,20 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+    @DELETE
+    @Path("/delete/{productId}")
+    public Response deleteProductFromCart(@CookieParam("sessionId") String sessionId, @PathParam("productId") String productId) {
+        try {
+            ValidationUtils.validateSessionId(sessionId);
+            orderService.deleteProductFromCart(sessionId, productId);
+            return Response.ok("Prodotto rimosso dal carrello con successo.").build();
+        } catch (UserSessionNotFoundException e) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
 
     @POST
     @Path("/create")
