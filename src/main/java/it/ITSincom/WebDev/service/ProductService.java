@@ -234,10 +234,15 @@ public class ProductService {
     }
 
     public List<ProductResponse> getProductsByCategoryForUser(String category) {
-        // Recupera solo i prodotti visibili appartenenti alla categoria specificata.
+        System.out.println("Categoria richiesta: " + category);  // Aggiungi questo per verificare il valore
         List<Product> products = productRepository.findVisibleProducts().stream()
                 .filter(product -> product.getCategory().name().equalsIgnoreCase(category))
                 .collect(Collectors.toList());
+
+        // Verifica se i prodotti sono stati trovati
+        if (products.isEmpty()) {
+            System.out.println("Nessun prodotto trovato per la categoria: " + category);
+        }
 
         List<ProductResponse> productResponses = new ArrayList<>();
         for (Product product : products) {
@@ -254,6 +259,7 @@ public class ProductService {
 
         return productResponses;
     }
+
 
 
     public ProductResponse getProductById(String productId) {

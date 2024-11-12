@@ -48,28 +48,25 @@ public class ProductResource {
 
 
     @GET
-    @Path("/{id}")
+    @Path("/{id}/id")
     public Response getProductById(@PathParam("id") String productId) {
-        try {
-            ProductResponse productResponse = productService.getProductById(productId);
-            return Response.ok(productResponse).build();
-        } catch (ProductNotFoundException e) {
-            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
-        }
+        ProductResponse productResponse = productService.getProductById(productId);
+        return Response.ok(productResponse).build();
     }
 
     @GET
     @Path("/{category}")
-    public Response getProductsByCategory(@CookieParam("sessionId") String sessionId, @PathParam("category") String category) throws UserSessionNotFoundException {
-        try {
-            authenticationService.isAdmin(sessionId);
-            List<ProductAdminResponse> productResponses = productService.getProductsByCategoryForAdmin(category);
-            return Response.ok(productResponses).build();
+    public Response getProductsByCategory(@PathParam("category") String category)  {
+        List<ProductResponse> productResponses = productService.getProductsByCategoryForUser(category);
+        return Response.ok(productResponses).build();
+    }
 
-        } catch (UnauthorizedAccessException e) {
-            List<ProductResponse> productResponses = productService.getProductsByCategoryForUser(category);
-            return Response.ok(productResponses).build();
-        }
+    @GET
+    @Path("/{category}/admin")
+    public Response getProductsByCategoryAdmin(@CookieParam("sessionId") String sessionId, @PathParam("category") String category) throws UserSessionNotFoundException {
+        authenticationService.isAdmin(sessionId);
+        List<ProductAdminResponse> productResponses = productService.getProductsByCategoryForAdmin(category);
+        return Response.ok(productResponses).build();
     }
 
 
