@@ -7,6 +7,7 @@ import it.ITSincom.WebDev.rest.model.ProductAdminResponse;
 import it.ITSincom.WebDev.rest.model.ProductResponse;
 import it.ITSincom.WebDev.service.ProductService;
 import it.ITSincom.WebDev.service.AuthenticationService;
+import it.ITSincom.WebDev.service.exception.ProductNotFoundException;
 import it.ITSincom.WebDev.service.exception.UnauthorizedAccessException;
 import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import it.ITSincom.WebDev.util.Validation;
@@ -43,6 +44,17 @@ public class ProductResource {
         } catch (UnauthorizedAccessException e) {
             List<ProductResponse> productResponses = productService.getAllProductsForUser();
             return Response.ok(productResponses).build();
+        }
+    }
+
+    @GET
+    @Path("/{id}")
+    public Response getProductById(@PathParam("id") String productId) {
+        try {
+            ProductResponse productResponse = productService.getProductById(productId);
+            return Response.ok(productResponse).build();
+        } catch (ProductNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
 

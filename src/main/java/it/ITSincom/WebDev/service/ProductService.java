@@ -234,11 +234,12 @@ public class ProductService {
     }
 
     public List<ProductResponse> getProductsByCategoryForUser(String category) {
-        // Recupera tutti i prodotti appartenenti alla categoria specificata, con informazioni limitate.
-        // Questo metodo dovrebbe essere utilizzato dagli utenti normali per visualizzare informazioni di base sui prodotti.
-        List<Product> products = productRepository.findByCategory(category);
-        List<ProductResponse> productResponses = new ArrayList<>();
+        // Recupera solo i prodotti visibili appartenenti alla categoria specificata.
+        List<Product> products = productRepository.findVisibleProducts().stream()
+                .filter(product -> product.getCategory().name().equalsIgnoreCase(category))
+                .collect(Collectors.toList());
 
+        List<ProductResponse> productResponses = new ArrayList<>();
         for (Product product : products) {
             ProductResponse response = new ProductResponse(
                     product.getName(),
@@ -252,6 +253,19 @@ public class ProductService {
         }
 
         return productResponses;
+    }
+
+
+    public ProductResponse getProductById(String productId) {
+        Product product = getProductByIdOrThrow(productId);
+        return new ProductResponse(
+                product.getName(),
+                product.getDescription(),
+                product.getImage(),
+                product.getPrice(),
+                product.getCategory().name(),
+                product.getIngredientNames()
+        );
     }
 
 }
