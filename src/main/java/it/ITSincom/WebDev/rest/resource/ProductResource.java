@@ -48,26 +48,27 @@ public class ProductResource {
 
 
     @GET
-    @Path("/{id}/id")
+    @Path("/{id}")
     public Response getProductById(@PathParam("id") String productId) {
         ProductResponse productResponse = productService.getProductById(productId);
         return Response.ok(productResponse).build();
     }
 
     @GET
-    @Path("/{category}")
-    public Response getProductsByCategory(@PathParam("category") String category)  {
+    @Path("/products")
+    public Response getProductsByCategory(@QueryParam("category") String category) {
         List<ProductResponse> productResponses = productService.getProductsByCategoryForUser(category);
         return Response.ok(productResponses).build();
     }
 
     @GET
-    @Path("/{category}/admin")
-    public Response getProductsByCategoryAdmin(@CookieParam("sessionId") String sessionId, @PathParam("category") String category) throws UserSessionNotFoundException {
+    @Path("/products/admin")
+    public Response getProductsByCategoryAdmin(@CookieParam("sessionId") String sessionId, @QueryParam("category") String category) throws UserSessionNotFoundException {
         authenticationService.isAdmin(sessionId);
         List<ProductAdminResponse> productResponses = productService.getProductsByCategoryForAdmin(category);
         return Response.ok(productResponses).build();
     }
+
 
 
     @POST
