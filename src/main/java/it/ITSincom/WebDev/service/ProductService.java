@@ -28,22 +28,22 @@ public class ProductService {
         this.ingredientRepository = ingredientRepository;
     }
 
-    public List<ProductResponse> getAllProductsForUser() {
-        List<Product> products = productRepository.findVisibleProducts();
-        return products.stream()
-                .map(product -> {
-                    List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
-                    return new ProductResponse(
-                            product.getName(),
-                            product.getDescription(),
-                            product.getImage(),
-                            product.getPrice(),
-                            product.getCategory().name(),
-                            ingredients
-                    );
-                })
-                .collect(Collectors.toList());
-    }
+        public List<ProductResponse> getAllProductsForUser() {
+            List<Product> products = productRepository.findVisibleProducts();
+            return products.stream()
+                    .map(product -> {
+                        List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
+                        return new ProductResponse(
+                                product.getName(),
+                                product.getDescription(),
+                                product.getImage(),
+                                product.getPrice(),
+                                product.getCategory().name(),
+                                ingredients
+                        );
+                    })
+                    .collect(Collectors.toList());
+        }
 
     public List<ProductAdminResponse> getAllProductsForAdmin() {
         List<Product> products = productRepository.listAll();
