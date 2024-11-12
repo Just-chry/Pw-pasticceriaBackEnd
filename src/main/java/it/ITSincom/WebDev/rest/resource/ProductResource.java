@@ -55,14 +55,14 @@ public class ProductResource {
     }
 
     @GET
-    @Path("/products")
+    @Path("/category")
     public Response getProductsByCategory(@QueryParam("category") String category) {
         List<ProductResponse> productResponses = productService.getProductsByCategoryForUser(category);
         return Response.ok(productResponses).build();
     }
 
     @GET
-    @Path("/products/admin")
+    @Path("/category/admin")
     public Response getProductsByCategoryAdmin(@CookieParam("sessionId") String sessionId, @QueryParam("category") String category) throws UserSessionNotFoundException {
         authenticationService.isAdmin(sessionId);
         List<ProductAdminResponse> productResponses = productService.getProductsByCategoryForAdmin(category);
