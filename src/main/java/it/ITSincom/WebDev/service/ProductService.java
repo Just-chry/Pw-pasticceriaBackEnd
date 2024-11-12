@@ -212,11 +212,13 @@ public class ProductService {
 
     public List<ProductAdminResponse> getProductsByCategoryForAdmin(String category) {
         // Recupera tutti i prodotti appartenenti alla categoria specificata, con dettagli amministrativi.
-        // Questo metodo dovrebbe essere utilizzato dagli amministratori per visualizzare informazioni più dettagliate sui prodotti.
         List<Product> products = productRepository.findByCategory(category);
         List<ProductAdminResponse> productAdminResponses = new ArrayList<>();
 
         for (Product product : products) {
+            // Recupera gli ingredienti per ciascun prodotto
+            List<String> ingredientNames = productRepository.findIngredientNamesByProductId(product.getId());
+
             ProductAdminResponse response = new ProductAdminResponse(
                     product.getId(),
                     product.getName(),
@@ -224,7 +226,7 @@ public class ProductService {
                     product.getImage(),
                     product.getPrice(),
                     product.getCategory().name(),
-                    product.getIngredientNames(),
+                    ingredientNames, // Passa gli ingredienti recuperati qui
                     product.getQuantity(),
                     product.getIsVisible()
             );
@@ -233,6 +235,7 @@ public class ProductService {
 
         return productAdminResponses;
     }
+
 
     public List<ProductResponse> getProductsByCategoryForUser(String category) {
         System.out.println("Categoria richiesta: " + category);  // Aggiungi questo per verificare il valore
@@ -247,6 +250,9 @@ public class ProductService {
 
         List<ProductResponse> productResponses = new ArrayList<>();
         for (Product product : products) {
+            // Recupera gli ingredienti per ciascun prodotto
+            List<String> ingredientNames = productRepository.findIngredientNamesByProductId(product.getId());
+
             ProductResponse response = new ProductResponse(
                     product.getId(),
                     product.getName(),
@@ -254,7 +260,7 @@ public class ProductService {
                     product.getImage(),
                     product.getPrice(),
                     product.getCategory().name(),
-                    product.getIngredientNames()
+                    ingredientNames  // Passa gli ingredienti qui
             );
             productResponses.add(response);
         }
@@ -263,8 +269,13 @@ public class ProductService {
     }
 
 
+
     public ProductResponse getProductById(String productId) {
         Product product = getProductByIdOrThrow(productId);
+
+        // Recupera gli ingredienti per il prodotto specifico
+        List<String> ingredientNames = productRepository.findIngredientNamesByProductId(product.getId());
+
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
@@ -272,8 +283,9 @@ public class ProductService {
                 product.getImage(),
                 product.getPrice(),
                 product.getCategory().name(),
-                product.getIngredientNames()
+                ingredientNames  // Passa gli ingredienti recuperati qui
         );
     }
+
 
 }
