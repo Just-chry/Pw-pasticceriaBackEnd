@@ -28,22 +28,23 @@ public class ProductService {
         this.ingredientRepository = ingredientRepository;
     }
 
-        public List<ProductResponse> getAllProductsForUser() {
-            List<Product> products = productRepository.findVisibleProducts();
-            return products.stream()
-                    .map(product -> {
-                        List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
-                        return new ProductResponse(
-                                product.getName(),
-                                product.getDescription(),
-                                product.getImage(),
-                                product.getPrice(),
-                                product.getCategory().name(),
-                                ingredients
-                        );
-                    })
-                    .collect(Collectors.toList());
-        }
+    public List<ProductResponse> getAllProductsForUser() {
+        List<Product> products = productRepository.findVisibleProducts();
+        return products.stream()
+                .map(product -> {
+                    List<String> ingredients = productRepository.findIngredientNamesByProductId(product.getId());
+                    return new ProductResponse(
+                            product.getId(),
+                            product.getName(),
+                            product.getDescription(),
+                            product.getImage(),
+                            product.getPrice(),
+                            product.getCategory().name(),
+                            ingredients
+                    );
+                })
+                .collect(Collectors.toList());
+    }
 
     public List<ProductAdminResponse> getAllProductsForAdmin() {
         List<Product> products = productRepository.listAll();
@@ -247,6 +248,7 @@ public class ProductService {
         List<ProductResponse> productResponses = new ArrayList<>();
         for (Product product : products) {
             ProductResponse response = new ProductResponse(
+                    product.getId(),
                     product.getName(),
                     product.getDescription(),
                     product.getImage(),
@@ -261,10 +263,10 @@ public class ProductService {
     }
 
 
-
     public ProductResponse getProductById(String productId) {
         Product product = getProductByIdOrThrow(productId);
         return new ProductResponse(
+                product.getId(),
                 product.getName(),
                 product.getDescription(),
                 product.getImage(),

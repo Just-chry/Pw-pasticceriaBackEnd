@@ -3,6 +3,7 @@ package it.ITSincom.WebDev.rest.model;
 import java.util.List;
 
 public class ProductResponse {
+    private String id;
     private String name;
     private String description;
     private String image;
@@ -10,7 +11,8 @@ public class ProductResponse {
     private String category;
     private List<String> ingredients;
 
-    public ProductResponse(String name, String description, String image, Double price, String category, List<String> ingredients) {
+    public ProductResponse(String id,String name, String description, String image, Double price, String category, List<String> ingredients) {
+        this.id = id;
         this.name = name;
         this.description = description;
         this.image = image;
@@ -19,6 +21,13 @@ public class ProductResponse {
         this.ingredients = ingredients;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
