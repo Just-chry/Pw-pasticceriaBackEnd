@@ -69,6 +69,14 @@ public class ProductResource {
         return Response.status(Response.Status.CREATED).entity("Prodotto aggiunto con successo").build();
     }
 
+    @POST
+    @Path("/add-multiple")
+    public Response addProducts(@CookieParam("sessionId") String sessionId, List<Product> products) throws UserSessionNotFoundException {
+        authenticationService.isAdmin(sessionId);
+        productService.addProducts(products);
+        return Response.status(Response.Status.CREATED).entity("Prodotti aggiunti con successo").build();
+    }
+
     @DELETE
     @Path("/{id}")
     public Response deleteProduct(@CookieParam("sessionId") String sessionId, @PathParam("id") String productId) throws UserSessionNotFoundException {
@@ -92,6 +100,8 @@ public class ProductResource {
         productService.incrementProductQuantity(productId);
         return Response.ok("Quantità del Prodotto: " + productId + " incrementata di 1").build();
     }
+
+
 
     @PUT
     @Path("/{id}")

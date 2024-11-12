@@ -71,6 +71,7 @@ public class ProductService {
         productRepository.persist(product);
         addIngredientsToProduct(product);
     }
+
     @Transactional
     public void addProducts(List<Product> products) {
         for (Product product : products) {
