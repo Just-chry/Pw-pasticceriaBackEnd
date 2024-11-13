@@ -78,7 +78,6 @@ public class ProductResource {
         authenticationService.isAdmin(sessionId);
 
         try {
-            // Chiamo il service per aggiungere il prodotto
             productService.addProduct(productReq);
             return Response.status(Response.Status.CREATED).entity(productReq).build();
         } catch (IOException e) {

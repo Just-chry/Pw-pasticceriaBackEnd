@@ -93,8 +93,9 @@ public class ProductService {
         // Persisti il prodotto nel repository
         productRepository.persist(product);
 
-        // Aggiungi gli ingredienti al prodotto
-        addIngredientsToProduct(product);
+        if (product.getIngredientNames() != null && !product.getIngredientNames().isEmpty()) {
+            addIngredientsToProduct(product);
+        }
     }
 
     private void saveImage(String base64Image, String fileName) throws IOException {
