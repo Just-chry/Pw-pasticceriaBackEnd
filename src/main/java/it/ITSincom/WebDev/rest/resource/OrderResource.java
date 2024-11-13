@@ -15,6 +15,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 
@@ -140,6 +142,30 @@ public class OrderResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
+    @GET
+    @Path("/day/{date}")
+    public Response getOrdersByDay(@CookieParam("sessionId") String sessionId, @PathParam("date") String date) {
+        try {
+            // Validate if the user has admin privileges
+            authenticationService.isAdmin(sessionId);
+
+            // Trim any extra spaces from the date string
+            String trimmedDate = date.trim();
+
+            // Parse the date from the path parameter
+            LocalDate parsedDate = LocalDate.parse(trimmedDate, DateTimeFormatter.ISO_LOCAL_DATE);
+
+            // Retrieve orders by the given date from the service
+            List<Order> orders = orderService.getOrdersByDay(parsedDate);
+
+            return Response.ok(orders).build();
+        } catch (UserSessionNotFoundException e) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
 
     private User validateSessionAndGetUser(String sessionId) throws UserSessionNotFoundException {
         // Recupera la UserSession e l'utente

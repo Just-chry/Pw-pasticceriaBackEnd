@@ -16,6 +16,7 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class OrderService {
@@ -351,6 +352,13 @@ public class OrderService {
         }
 
         return cart;
+    }
+
+    public List<Order> getOrdersByDay(LocalDate parsedDate) {
+        // Retrieve all orders and filter them by the given date
+        return orderRepository.listAll().stream()
+                .filter(order -> order.getPickupDateTime() != null && order.getPickupDateTime().toLocalDate().equals(parsedDate))
+                .collect(Collectors.toList());
     }
 
 }
