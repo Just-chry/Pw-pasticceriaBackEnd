@@ -25,7 +25,9 @@ public class Product {
     @Transient
     private List<String> ingredientNames;
 
-    public Product() {this.id = UUID.randomUUID().toString();}
+    public Product() {
+        this.id = UUID.randomUUID().toString();
+    }
 
     public String getId() {
         return id;

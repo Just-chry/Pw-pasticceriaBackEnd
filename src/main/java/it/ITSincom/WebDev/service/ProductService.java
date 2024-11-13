@@ -40,7 +40,8 @@ public class ProductService {
                             product.getImage(),
                             product.getPrice(),
                             product.getCategory().name(),
-                            ingredients
+                            ingredients,
+                            product.getQuantity()
                     );
                 })
                 .collect(Collectors.toList());
@@ -260,8 +261,8 @@ public class ProductService {
                     product.getImage(),
                     product.getPrice(),
                     product.getCategory().name(),
-                    ingredientNames  // Passa gli ingredienti qui
-            );
+                    ingredientNames,  // Passa gli ingredienti qui
+                    product.getQuantity());
             productResponses.add(response);
         }
 
@@ -283,8 +284,8 @@ public class ProductService {
                 product.getImage(),
                 product.getPrice(),
                 product.getCategory().name(),
-                ingredientNames  // Passa gli ingredienti recuperati qui
-        );
+                ingredientNames,  // Passa gli ingredienti recuperati qui
+                product.getQuantity());
     }
 
 

@@ -47,6 +47,7 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+
     @DELETE
     @Path("/delete/{productId}")
     public Response deleteProductFromCart(@CookieParam("sessionId") String sessionId, @PathParam("productId") String productId) {

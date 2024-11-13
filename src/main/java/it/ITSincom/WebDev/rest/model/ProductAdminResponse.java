@@ -8,7 +8,7 @@ public class ProductAdminResponse extends ProductResponse {
 
     // Costruttore con `id` e `quantity`
     public ProductAdminResponse(String id, String name, String description, String image, Double price, String category, List<String> ingredients, Integer quantity, Boolean is_visible) {
-        super(id,name, description, image, price, category, ingredients);
+        super(id,name, description, image, price, category, ingredients, quantity);
         this.quantity = quantity;
         this.is_visible = is_visible;
     }

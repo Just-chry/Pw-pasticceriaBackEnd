@@ -10,8 +10,9 @@ public class ProductResponse {
     private Double price;
     private String category;
     private List<String> ingredients;
+    private Integer quantity;
 
-    public ProductResponse(String id,String name, String description, String image, Double price, String category, List<String> ingredients) {
+    public ProductResponse(String id, String name, String description, String image, Double price, String category, List<String> ingredients, Integer quantity) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -19,6 +20,7 @@ public class ProductResponse {
         this.price = price;
         this.category = category;
         this.ingredients = ingredients;
+        this.quantity = quantity;
     }
 
     public String getId() {
@@ -75,5 +77,13 @@ public class ProductResponse {
 
     public void setIngredients(List<String> ingredients) {
         this.ingredients = ingredients;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }
