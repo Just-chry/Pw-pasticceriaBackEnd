@@ -97,9 +97,16 @@ public class OrderResource {
     public Response deleteOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
         try {
             validateSessionAndGetUser(sessionId);
-            orderService.deleteOrder(sessionId, orderId); // Passa l'utente invece del sessionId
+
+            // Recupera l'ordine PRIMA di cancellarlo per inviare la notifica
             Order order = orderService.getOrder(orderId);
+
+            // Invia la notifica di cancellazione dell'ordine
             notificationService.sendOrderCancelledNotificationToAdmin(order);
+
+            // Cancella l'ordine
+            orderService.deleteOrder(sessionId, orderId);
+
             return Response.ok("Ordine cancellato con successo.").build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
@@ -107,6 +114,7 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+
 
 
     @GET
