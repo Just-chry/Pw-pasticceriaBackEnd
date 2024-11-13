@@ -269,6 +269,13 @@ public class AuthenticationService {
         // Restituisce l'utente associato alla sessione
         return session.getUser();
     }
+    public User getUserById(String userId) throws UserNotFoundException {
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new UserNotFoundException("Utente non trovato");
+        }
+        return user;
+    }
 
 
 }

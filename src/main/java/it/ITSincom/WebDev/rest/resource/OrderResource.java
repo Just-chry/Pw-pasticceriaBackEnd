@@ -149,4 +149,48 @@ public class OrderResource {
         }
     }
 
+    @PUT
+    @Path("/reject/{orderId}")
+    public Response rejectOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
+        try {
+            // Verifica se l'utente è un amministratore
+            authenticationService.isAdmin(sessionId);
+
+            // Rifiuta l'ordine usando il servizio OrderService
+            orderService.rejectOrder(orderId);
+
+            // Recupera l'utente associato all'ordine
+            User user = orderService.getUserByOrderId(orderId);
+
+            // Invia una notifica all'utente che l'ordine è stato rifiutato
+            notificationService.sendOrderRejectedNotification(user, orderId);
+
+            // Restituisci una risposta di successo
+            return Response.ok("Ordine rifiutato con successo e notifica inviata.").build();
+        } catch (Exception e) {
+            // Gestione dell'eccezione
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+    @POST
+    @Path("/notify/{orderId}")
+    public Response sendOrderNotification(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
+        try {
+            authenticationService.isAdmin(sessionId);
+
+            Order order = orderService.getOrder(orderId);
+
+            User user = orderService.getUserByOrderId(orderId);
+
+            notificationService.sendOrderInCartNotification(user, order);
+
+            return Response.ok("Notifica inviata con successo").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+
+
 }

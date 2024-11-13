@@ -3,6 +3,7 @@ package it.ITSincom.WebDev.rest.resource;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.AuthenticationService;
+import it.ITSincom.WebDev.service.exception.UserNotFoundException;
 import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -19,6 +20,16 @@ public class UserResource {
 
     @Inject
     AuthenticationService authenticationService;
+
+    @GET
+    @Path("/{userId}")
+    public Response getUserById(@PathParam("userId") String userId) throws UserNotFoundException {
+        User user = authenticationService.getUserById(userId);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(user).build();
+    }
 
     @GET
     @Path("/all")

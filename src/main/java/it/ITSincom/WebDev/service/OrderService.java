@@ -41,6 +41,7 @@ public class OrderService {
 
         String userId = optionalUserSession.get().getUser().getId();
         List<Order> userOrders = orderRepository.findByUserId(userId);
+        System.out.println("Recuperando gli ordini per UserID: " + userId);
 
         if (userOrders.isEmpty()) {
             throw new Exception("Nessun ordine trovato per l'utente.");
@@ -57,7 +58,7 @@ public class OrderService {
                             item.setProductName(productDetails.getName());
                             item.setPrice(productDetails.getPrice());
                         } else {
-                            throw new Exception("Nessun ordine trovato per l'utente.");
+                            throw new Exception("Nessun ordine trovato per l'utentess.");
                         }
                     }
                 }
@@ -134,7 +135,11 @@ public class OrderService {
             throw new Exception("Il carrello è vuoto. Aggiungi prodotti prima di creare un ordine.");
         }
 
+
         LocalDateTime pickupDateTime = LocalDateTime.of(orderRequest.getPickupDate(), orderRequest.getPickupTime());
+        if (pickupDateTime.getDayOfWeek() == DayOfWeek.MONDAY) {
+            throw new Exception("Gli ordini non possono essere effettuati il lunedì poiché siamo chiusi.");
+        }
         if (!isPickupTimeValid(orderRequest.getPickupTime()) || isPickupSlotTaken(pickupDateTime)) {
             throw new Exception("La fascia oraria selezionata non è disponibile. Gli ordini possono essere fatti solo ogni 10 minuti dalle 9:00 alle 13:00 e dalle 15:00 alle 19:00.");
         }
@@ -142,6 +147,7 @@ public class OrderService {
         Order cart = optionalCart.get();
         Order order = new Order(userId, pickupDateTime, orderRequest.getComments(), cart.getProducts(), "pending");
         orderRepository.persist(order);
+        System.out.println("Ordine creato: ID = " + order.getId() + ", UserID = " + order.getUserId());
 
         // Clear the cart after order is created by deleting it
         orderRepository.delete(cart);
@@ -297,6 +303,23 @@ public class OrderService {
         // Update the cart
         cart.setProducts(items);
         orderRepository.update(cart);
+    }
+
+    @Transactional
+    public void rejectOrder(String orderId) throws Exception {
+        // Recupera l'ordine tramite il suo ID
+        Order order = getOrder(orderId);
+
+        // Verifica se l'ordine è nello stato 'pending'
+        if (!"pending".equals(order.getStatus())) {
+            throw new Exception("L'ordine non è in stato 'pending' e non può essere rifiutato.");
+        }
+
+        // Imposta lo stato dell'ordine su 'rejected'
+        order.setStatus("rifiutato");
+
+        // Aggiorna l'ordine nel repository
+        orderRepository.update(order);
     }
 
 }

@@ -15,11 +15,13 @@ public class ProfileService {
 
     private final UserRepository userRepository;
     private final Mailer mailer;
+    private final ProfileService profileService;
 
     @Inject
-    public ProfileService(UserRepository userRepository, Mailer mailer) {
+    public ProfileService(UserRepository userRepository, Mailer mailer, ProfileService profileService) {
         this.userRepository = userRepository;
         this.mailer = mailer;
+        this.profileService = profileService;
     }
 
     @Transactional
@@ -61,6 +63,8 @@ public class ProfileService {
 
         String hashedNewPassword = authService.hashPassword(newPassword);
         user.setPassword(hashedNewPassword);
+        profileService.updateUser(user);
+
     }
 
     public User updatePhoneNumber(User user, String newPhone) {

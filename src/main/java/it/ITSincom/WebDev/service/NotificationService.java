@@ -82,4 +82,64 @@ public class NotificationService {
         }
         return productDetails.toString();
     }
+
+    public void sendOrderRejectedNotification(User user, String orderId) throws Exception {
+        Order order = orderService.getOrder(orderId);
+        String productDetails = buildProductDetails(order);
+
+        // Messaggio di notifica per l'ordine rifiutato
+        String message = "Purtroppo il tuo ordine alla Pasticceria C'est La Vie è stato rifiutato.<br><br>"
+                + "Dettagli dell'ordine:<br>"
+                + productDetails
+                + "<br>Ci dispiace per l'inconveniente. Ti invitiamo a contattarci per ulteriori informazioni.";
+
+        // Invia una notifica via email o SMS a seconda delle informazioni disponibili
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            mailer.send(Mail.withHtml(
+                    user.getEmail(),
+                    "Ordine Rifiutato",
+                    "<p>" + message + "</p>"
+            ));
+        } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            String smsMessage = "Purtroppo il tuo ordine alla Pasticceria C'est La Vie è stato rifiutato. "
+                    + "Ci dispiace per l'inconveniente. Per ulteriori informazioni, contattaci.";
+            smsService.sendSms(user.getPhone(), smsMessage);
+        }
+    }
+
+    public void sendOrderInCartNotification(User user, Order order) throws Exception {
+        // Verifica che l'utente sia valido
+        if (user == null) {
+            throw new IllegalArgumentException("Utente non valido");
+        }
+
+        // Verifica che l'ordine sia valido e sia nello stato 'in_cart'
+        if (order == null || !"cart".equals(order.getStatus())) {
+            throw new IllegalArgumentException("L'ordine non è valido o non è nello stato 'in_cart'");
+        }
+
+        // Crea il messaggio per l'ordine in cart
+        String productDetails = buildProductDetails(order);
+        String message = "Il tuo ordine alla Pasticceria C'est La Vie è ancora nel carrello.<br><br>"
+                + "Dettagli dell'ordine:<br>"
+                + productDetails
+                + "<br>Ti invitiamo a completare l'ordine per garantirti il ritiro nel giorno scelto.<br>"
+                + "Grazie per averci scelto!";
+
+        // Invia la notifica via email o SMS
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            mailer.send(Mail.withHtml(
+                    user.getEmail(),
+                    "Promemoria: Ordine nel Carrello",
+                    "<p>" + message + "</p>"
+            ));
+        } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            String smsMessage = "Il tuo ordine alla Pasticceria C'est La Vie è ancora nel carrello. "
+                    + "Completa l'ordine per garantire il ritiro.";
+            smsService.sendSms(user.getPhone(), smsMessage);
+        } else {
+            throw new IllegalArgumentException("Non sono disponibili contatti validi per l'utente");
+        }
+    }
+
 }
