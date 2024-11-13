@@ -5,12 +5,14 @@ public class UserResponse {
     private String surname;
     private String email;
     private String phone;
+    private String role;
 
-    public UserResponse(String nome, String cognome, String email, String telefono) {
-        this.name = nome;
-        this.surname = cognome;
+    public UserResponse(String name, String surname, String email, String phone, String role) {
+        this.name = name;
+        this.surname = surname;
         this.email = email;
-        this.phone = telefono;
+        this.phone = phone;
+        this.role = role;
     }
 
     public String getName() {
@@ -43,5 +45,13 @@ public class UserResponse {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

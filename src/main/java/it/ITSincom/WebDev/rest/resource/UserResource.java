@@ -31,4 +31,24 @@ public class UserResource {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         }
     }
+
+    @GET
+    public Response getUser(@CookieParam("sessionId") String sessionId) throws UserSessionNotFoundException {
+        User user = authenticationService.getUserBySessionId(sessionId);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Utente non trovato").build();
+        }
+
+        // Creiamo un UserResponse per evitare di inviare dati sensibili come la password
+        UserResponse userResponse = new UserResponse(
+                user.getName(),
+                user.getSurname(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getRole()
+        );
+
+        return Response.ok(userResponse).build();
+    }
+
 }

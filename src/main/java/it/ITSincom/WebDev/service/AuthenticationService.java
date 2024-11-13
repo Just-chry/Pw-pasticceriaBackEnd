@@ -246,7 +246,8 @@ public class AuthenticationService {
                     user.getName(),
                     user.getSurname(),
                     user.getEmail(),
-                    user.getPhone()
+                    user.getPhone(),
+                    user.getRole()
             );
             userResponses.add(response);
         }
@@ -256,4 +257,18 @@ public class AuthenticationService {
     public List<User> getAllUsers() {
         return userRepository.findAll().list();
     }
+
+    public User getUserBySessionId(String sessionId) throws UserSessionNotFoundException {
+        UserSession session = findUserSessionBySessionId(sessionId);
+
+        if (session == null) {
+            // Se la sessione non è trovata, lancia un'eccezione
+            throw new UserSessionNotFoundException("Sessione non trovata");
+        }
+
+        // Restituisce l'utente associato alla sessione
+        return session.getUser();
+    }
+
+
 }

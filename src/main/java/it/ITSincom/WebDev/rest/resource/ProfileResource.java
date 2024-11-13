@@ -41,7 +41,7 @@ public class ProfileResource {
             }
 
             User updatedUser = profileService.updateUser(user);
-            UserResponse response = new UserResponse(updatedUser.getName(), updatedUser.getSurname(), updatedUser.getEmail(), updatedUser.getPhone());
+            UserResponse response = new UserResponse(updatedUser.getName(), updatedUser.getSurname(), updatedUser.getEmail(), updatedUser.getPhone(), updatedUser.getRole());
             return Response.ok(response).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -58,7 +58,7 @@ public class ProfileResource {
 
             // Usa ProfileService per aggiornare il telefono
             User updatedUser = profileService.updatePhoneNumber(user, request.getPhone());
-            UserResponse response = new UserResponse(updatedUser.getName(), updatedUser.getSurname(), updatedUser.getEmail(), updatedUser.getPhone());
+            UserResponse response = new UserResponse(updatedUser.getName(), updatedUser.getSurname(), updatedUser.getEmail(), updatedUser.getPhone(), updatedUser.getRole());
             return Response.ok(response).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
