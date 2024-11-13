@@ -69,14 +69,21 @@ public class ProductService {
 
     @Transactional
     public void addProduct(Product product) {
+        if (product.getIsVisible() == null) {
+            product.setIsVisible(true); // Imposta isVisible a true se non è stato fornito
+        }
         validateProductInput(product);
         productRepository.persist(product);
         addIngredientsToProduct(product);
     }
 
+
     @Transactional
     public void addProducts(List<Product> products) {
         for (Product product : products) {
+            if (product.getIsVisible() == null) {
+                product.setIsVisible(true); // Imposta isVisible a true se non è stato fornito
+            }
             validateProductInput(product);
             productRepository.persist(product);
             addIngredientsToProduct(product);

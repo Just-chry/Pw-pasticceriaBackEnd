@@ -70,14 +70,12 @@ public class ProductResource {
     }
 
 
-
     @POST
     @Path("/add")
     public Response addProduct(@CookieParam("sessionId") String sessionId, Product product) throws UserSessionNotFoundException {
         authenticationService.isAdmin(sessionId);
         productService.addProduct(product);
-        return Response.status(Response.Status.CREATED).entity("Prodotto aggiunto con successo").build();
-    }
+        return Response.status(Response.Status.CREATED).entity(product).build();    }
 
     @POST
     @Path("/add-multiple")

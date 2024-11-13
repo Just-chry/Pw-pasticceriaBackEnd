@@ -27,6 +27,7 @@ public class Product {
 
     public Product() {
         this.id = UUID.randomUUID().toString();
+        this.isVisible = true;
     }
 
     public String getId() {
