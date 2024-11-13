@@ -13,6 +13,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -132,8 +133,24 @@ public class ProductService {
     @Transactional
     public void deleteProduct(String productId) {
         Product product = getProductByIdOrThrow(productId);
+
+        // Cancella l'immagine associata, se esiste
+        String imagePath = "C:\\Users\\JiaHaoChristianChen\\PW-Pasticceria\\front-end/public" + product.getImage();
+        File imageFile = new File(imagePath);
+        if (imageFile.exists()) {
+            if (imageFile.delete()) {
+                System.out.println("Immagine eliminata con successo: " + imagePath);
+            } else {
+                System.err.println("Errore durante l'eliminazione dell'immagine: " + imagePath);
+            }
+        } else {
+            System.out.println("Immagine non trovata: " + imagePath);
+        }
+
+        // Cancella il prodotto dal repository
         productRepository.delete(product);
     }
+
 
     @Transactional
     public void decrementProductQuantity(String productId) {
