@@ -13,7 +13,12 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,14 +73,47 @@ public class ProductService {
     }
 
     @Transactional
-    public void addProduct(Product product) {
-        if (product.getIsVisible() == null) {
-            product.setIsVisible(true); // Imposta isVisible a true se non è stato fornito
+    public void addProduct(Product product) throws IOException {
+        // Se l'immagine è in formato Base64, la salviamo
+        String base64Image = product.getImage();
+        if (base64Image != null && !base64Image.isEmpty()) {
+            // Genero un nome univoco per l'immagine usando il nome del prodotto
+            String fileName = product.getName().replaceAll("\\s+", "_") + ".png";
+
+            // Salvo l'immagine nel filesystem
+            saveImage(base64Image, fileName);
+
+            // Imposto il percorso dell'immagine nel prodotto
+            product.setImage("/images/" + fileName); // Puoi usare un percorso relativo per una migliore portabilità
         }
+
+        // Valida i campi del prodotto
         validateProductInput(product);
+
+        // Persisti il prodotto nel repository
         productRepository.persist(product);
+
+        // Aggiungi gli ingredienti al prodotto
         addIngredientsToProduct(product);
     }
+
+    private void saveImage(String base64Image, String fileName) throws IOException {
+        // Rimuovo la parte "data:image/png;base64," se presente
+        String[] parts = base64Image.split(",");
+        String imageData = parts.length > 1 ? parts[1] : parts[0];
+
+        // Decodifico l'immagine in byte[]
+        byte[] imageBytes = Base64.getDecoder().decode(imageData);
+
+        // Percorso di salvataggio
+        Path path = Paths.get("C:\\Users\\JiaHaoChristianChen\\PW-Pasticceria\\front-end/public/images/" + fileName);
+
+        // Salvo l'immagine nel percorso specificato
+        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
+            fos.write(imageBytes);
+        }
+    }
+
 
 
     @Transactional

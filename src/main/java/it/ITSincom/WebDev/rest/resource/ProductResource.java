@@ -14,6 +14,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.io.IOException;
 import java.util.List;
 
 @Path("/products")
@@ -72,10 +73,22 @@ public class ProductResource {
 
     @POST
     @Path("/add")
-    public Response addProduct(@CookieParam("sessionId") String sessionId, Product product) throws UserSessionNotFoundException {
+    public Response addProduct(@CookieParam("sessionId") String sessionId, Product productReq) throws UserSessionNotFoundException {
+        // Controllo se l'utente è admin
         authenticationService.isAdmin(sessionId);
-        productService.addProduct(product);
-        return Response.status(Response.Status.CREATED).entity(product).build();    }
+
+        try {
+            // Chiamo il service per aggiungere il prodotto
+            productService.addProduct(productReq);
+            return Response.status(Response.Status.CREATED).entity(productReq).build();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Errore durante il salvataggio del prodotto: " + e.getMessage())
+                    .build();
+        }
+    }
+
 
     @POST
     @Path("/add-multiple")
