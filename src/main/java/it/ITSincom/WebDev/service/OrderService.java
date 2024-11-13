@@ -322,4 +322,35 @@ public class OrderService {
         orderRepository.update(order);
     }
 
+    public Order getCartByUserSession(String sessionId) throws Exception {
+        Optional<UserSession> optionalUserSession = userSessionRepository.findBySessionId(sessionId);
+        if (optionalUserSession.isEmpty()) {
+            throw new Exception("Sessione non valida. Effettua il login.");
+        }
+
+        String userId = optionalUserSession.get().getUser().getId();
+        Optional<Order> optionalCart = orderRepository.find("userId = ?1 and status = 'cart'", userId).firstResultOptional();
+
+        if (optionalCart.isEmpty()) {
+            throw new Exception("Carrello vuoto o non trovato.");
+        }
+
+        Order cart = optionalCart.get();
+        // Assicurati che ogni prodotto abbia valori completi
+        for (OrderItem item : cart.getProducts()) {
+            if (item.getProductId() != null) {
+                Optional<Product> product = productRepository.findByIdOptional(item.getProductId());
+                if (product.isPresent()) {
+                    Product productDetails = product.get();
+                    item.setProductName(productDetails.getName());
+                    item.setPrice(productDetails.getPrice());
+                } else {
+                    throw new Exception("Prodotto non trovato: " + item.getProductId());
+                }
+            }
+        }
+
+        return cart;
+    }
+
 }

@@ -48,6 +48,7 @@ public class OrderResource {
         }
     }
 
+
     @DELETE
     @Path("/delete/{productId}")
     public Response deleteProductFromCart(@CookieParam("sessionId") String sessionId, @PathParam("productId") String productId) {
@@ -77,6 +78,17 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+    @GET
+    @Path("/cart")
+    public Response getCartByUser(@CookieParam("sessionId") String sessionId) {
+        try {
+            Order cart = orderService.getCartByUserSession(sessionId);
+            return Response.ok(cart).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
 
 
 
