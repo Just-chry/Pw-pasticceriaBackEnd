@@ -4,6 +4,7 @@ import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.rest.model.LoginRequest;
 import it.ITSincom.WebDev.rest.model.LoginResponse;
+import it.ITSincom.WebDev.rest.model.ResetPasswordRequest;
 import it.ITSincom.WebDev.service.exception.*;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -45,9 +46,10 @@ public class AuthenticationResource {
 
     @GET
     @Path("/verify")
-    public Response verify(@QueryParam("token") String token, @QueryParam("contact") String contact) {
-        return authenticationService.verifyContact(token, contact);
+    public Response verify(@QueryParam("token") String token, @QueryParam("contact") String contact, @QueryParam("type") String type) {
+        return authenticationService.verifyContact(token, contact, type);
     }
+
 
     @POST
     @Path("/login")
@@ -75,6 +77,27 @@ public class AuthenticationResource {
         NewCookie expiredCookie = new NewCookie("sessionId", "", "/", null, "Session Cookie", -1, false);
         return Response.ok("Logout avvenuto con successo").cookie(expiredCookie).build();
     }
+
+    @POST
+    @Path("/forgot-password")
+    public Response forgotPassword(@QueryParam("contact") String contact) {
+        try {
+            return authenticationService.handleForgotPassword(contact);
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+    @POST
+    @Path("/reset-password")
+    public Response resetPassword(ResetPasswordRequest request) {
+        try {
+            return authenticationService.resetPassword(request);
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
 
 
 }

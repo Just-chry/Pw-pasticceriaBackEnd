@@ -5,12 +5,9 @@ import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 import it.ITSincom.WebDev.persistence.model.UserSession;
 import it.ITSincom.WebDev.persistence.UserSessionRepository;
-import it.ITSincom.WebDev.rest.model.CreateUserRequest;
+import it.ITSincom.WebDev.rest.model.*;
 import it.ITSincom.WebDev.persistence.model.User;
 import it.ITSincom.WebDev.persistence.UserRepository;
-import it.ITSincom.WebDev.rest.model.LoginRequest;
-import it.ITSincom.WebDev.rest.model.LoginResponse;
-import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.exception.*;
 import it.ITSincom.WebDev.util.Validation;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -68,9 +65,12 @@ public class AuthenticationService {
     }
 
 
-
     @Transactional
-    public Response verifyContact(String token, String contact) {
+    public Response verifyContact(String token, String contact, String type) {
+        if (type == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Il parametro 'type' è obbligatorio.").build();
+        }
+
         Optional<User> optionalUser;
         if (contact.contains("@")) {
             optionalUser = findUserByEmail(contact);
@@ -84,23 +84,31 @@ public class AuthenticationService {
 
         User user = optionalUser.get();
 
-        if (contact.contains("@")) {
-            if (user.getVerificationTokenEmail() == null || !user.getVerificationTokenEmail().equals(token)) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+        if (type.equals("registration")) {
+            if (contact.contains("@")) {
+                if (user.getVerificationTokenEmail() == null || !user.getVerificationTokenEmail().equals(token)) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+                }
+                user.setEmailVerified(true);
+                user.setVerificationTokenEmail(null);
+            } else {
+                if (user.getVerificationTokenPhone() == null || !user.getVerificationTokenPhone().equals(token)) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+                }
+                user.setPhoneVerified(true);
+                user.setVerificationTokenPhone(null);
             }
-            user.setEmailVerified(true);
-            user.setVerificationTokenEmail(null);
-        } else {
+        } else if (type.equals("password-reset")) {
             if (user.getVerificationTokenPhone() == null || !user.getVerificationTokenPhone().equals(token)) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido.").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido per il reset della password.").build();
             }
-            user.setPhoneVerified(true);
-            user.setVerificationTokenPhone(null);
         }
 
         userRepository.getEntityManager().merge(user);
-        return Response.ok("Contatto verificato con successo! Ora puoi accedere.").build();
+        return Response.ok("Verifica completata con successo!").build();
     }
+
+
 
     @Transactional
     public LoginResponse handleLogin(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
@@ -193,6 +201,7 @@ public class AuthenticationService {
     public Optional<User> findUserByPhone(String contact) {
         return userRepository.find("phone", contact).firstResultOptional();
     }
+
     public String generateOtp() {
         SecureRandom random = new SecureRandom();
         int otp = 100000 + random.nextInt(900000);
@@ -241,6 +250,7 @@ public class AuthenticationService {
 
         return userResponses;
     }
+
     public List<User> getAllUsers() {
         return userRepository.findAll().list();
     }
@@ -252,6 +262,7 @@ public class AuthenticationService {
         }
         return session.getUser();
     }
+
     public User getUserById(String userId) throws UserNotFoundException {
         User user = userRepository.findById(userId);
         if (user == null) {
@@ -260,5 +271,84 @@ public class AuthenticationService {
         return user;
     }
 
+
+    @Transactional
+    public Response handleForgotPassword(String contact) throws UserCreationException {
+        Optional<User> optionalUser;
+        if (contact.contains("@")) {
+            optionalUser = findUserByEmail(contact);
+        } else {
+            optionalUser = findUserByPhone(contact);
+        }
+
+        if (optionalUser.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Utente non trovato.").build();
+        }
+
+        User user = optionalUser.get();
+
+        if (contact.contains("@")) {
+            String token = UUID.randomUUID().toString();
+            user.setVerificationTokenEmail(token);
+            userRepository.getEntityManager().merge(user);
+            String resetLink = "http://localhost:3000/reset-password?token=" + token + "&contact=" + contact;
+            sendPasswordRecoveryEmail(user, resetLink);
+            return Response.ok("Email di recupero inviata con successo. Controlla il tuo indirizzo email.").build();
+        } else {
+            String otp = generateOtp();
+            user.setVerificationTokenPhone(otp);
+            sendVerificationSms(user);
+            return Response.ok("Codice OTP inviato con successo. Controlla il tuo cellulare.").build();
+        }
+    }
+
+    public void sendPasswordRecoveryEmail(User user, String resetLink) {
+        mailer.send(Mail.withHtml(user.getEmail(),
+                "Recupero della Password",
+                "<h1>Recupero della Password</h1>" +
+                        "<p>Ciao " + user.getName() + " " + user.getSurname() + ",</p>" +
+                        "<p>Abbiamo ricevuto una richiesta per il recupero della tua password. Clicca sul link seguente per resettare la tua password:</p>" +
+                        "<a href=\"" + resetLink + "\">Resetta la tua password</a>" +
+                        "<p>Se non hai richiesto questa azione, ignora semplicemente questa email.</p>"));
+    }
+
+
+    @Transactional
+    public Response resetPassword(ResetPasswordRequest request) {
+        String token = request.getToken();
+        String contact = request.getContact();
+        String newPassword = request.getPassword();
+
+        Optional<User> optionalUser;
+        if (contact.contains("@")) {
+            optionalUser = findUserByEmail(contact);
+        } else {
+            optionalUser = findUserByPhone(contact);
+        }
+
+        if (optionalUser.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Utente non trovato.").build();
+        }
+
+        User user = optionalUser.get();
+
+        if (contact.contains("@")) {
+            if (user.getVerificationTokenEmail() == null || !user.getVerificationTokenEmail().equals(token)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido per il reset della password E.").build();
+            }
+        } else {
+            if (user.getVerificationTokenPhone() == null || !user.getVerificationTokenPhone().trim().equals(token.trim())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Token non valido per il reset della password T.").build();
+            }
+        }
+
+        String hashedPassword = hashPassword(newPassword);
+        user.setPassword(hashedPassword);
+        user.setVerificationTokenPhone(null);
+        user.setVerificationTokenEmail(null);
+
+        userRepository.getEntityManager().merge(user);
+        return Response.ok("Password resettata con successo!").build();
+    }
 
 }
