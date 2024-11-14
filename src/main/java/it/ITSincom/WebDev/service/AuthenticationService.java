@@ -105,7 +105,7 @@ public class AuthenticationService {
         }
 
         userRepository.getEntityManager().merge(user);
-        return Response.ok("Verifica completata con successo!").build();
+        return Response.ok("Contatto verificato con successo! Ora puoi accedere, chiudi questa finestra e visita i nostri dolci").build();
     }
 
 
