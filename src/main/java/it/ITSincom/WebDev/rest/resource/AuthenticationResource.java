@@ -34,7 +34,7 @@ public class AuthenticationResource {
         User user = authenticationService.register(request);
 
         if (user.getEmail() != null && !user.getEmail().isEmpty()) {
-            String verificationLink = "http://localhost:8080/auth/verify?token=" + user.getVerificationTokenEmail() + "&contact=" + user.getEmail();
+            String verificationLink = "http://localhost:3000/verificaEmail?token=" + user.getVerificationTokenEmail() + "&contact=" + user.getEmail();
             authenticationService.sendVerificationEmail(user, verificationLink);
         } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
             authenticationService.sendVerificationSms(user);
