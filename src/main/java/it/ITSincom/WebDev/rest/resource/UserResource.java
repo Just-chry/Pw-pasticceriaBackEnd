@@ -9,8 +9,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Path("/user")
@@ -50,7 +48,6 @@ public class UserResource {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Utente non trovato").build();
         }
 
-        // Creiamo un UserResponse per evitare di inviare dati sensibili come la password
         UserResponse userResponse = new UserResponse(
                 user.getName(),
                 user.getSurname(),

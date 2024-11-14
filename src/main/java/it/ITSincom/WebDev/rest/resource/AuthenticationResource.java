@@ -1,25 +1,18 @@
-    package it.ITSincom.WebDev.rest.resource;
+package it.ITSincom.WebDev.rest.resource;
 
-    import it.ITSincom.WebDev.persistence.model.User;
-    import it.ITSincom.WebDev.persistence.model.UserSession;
-    import it.ITSincom.WebDev.rest.model.LoginRequest;
-    import it.ITSincom.WebDev.rest.model.LoginResponse;
-    import it.ITSincom.WebDev.service.SmsService;
-    import it.ITSincom.WebDev.service.exception.*;
-    import it.ITSincom.WebDev.util.Validation;
-    import jakarta.inject.Inject;
-    import jakarta.ws.rs.*;
-    import jakarta.ws.rs.core.MediaType;
-    import jakarta.ws.rs.core.NewCookie;
-    import jakarta.ws.rs.core.Response;
+import it.ITSincom.WebDev.persistence.model.User;
+import it.ITSincom.WebDev.persistence.model.UserSession;
+import it.ITSincom.WebDev.rest.model.LoginRequest;
+import it.ITSincom.WebDev.rest.model.LoginResponse;
+import it.ITSincom.WebDev.service.exception.*;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.Response;
 
-    import it.ITSincom.WebDev.rest.model.CreateUserRequest;
-    import it.ITSincom.WebDev.service.AuthenticationService;
-
-    import java.util.Optional;
-
-    import io.quarkus.mailer.Mailer;
-    import io.quarkus.mailer.Mail;
+import it.ITSincom.WebDev.rest.model.CreateUserRequest;
+import it.ITSincom.WebDev.service.AuthenticationService;
 
 
 @Path("/auth")

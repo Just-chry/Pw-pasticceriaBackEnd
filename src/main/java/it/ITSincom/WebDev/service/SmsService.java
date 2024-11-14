@@ -18,16 +18,13 @@ public class SmsService {
     @ConfigProperty(name = "twilio.phone.number")
     String fromPhoneNumber;
 
-    // Metodo per l'invio di SMS tramite Twilio
     public void sendSms(String toPhoneNumber, String messageBody) {
-        // Inizializza Twilio (questo può essere fatto una volta sola)
         Twilio.init(accountSid, authToken);
 
-        // Crea il messaggio
         Message message = Message.creator(
-                new PhoneNumber(toPhoneNumber), // Numero di destinazione
-                new PhoneNumber(fromPhoneNumber), // Numero Twilio da cui inviare l'SMS
-                messageBody // Contenuto del messaggio
+                new PhoneNumber(toPhoneNumber),
+                new PhoneNumber(fromPhoneNumber),
+                messageBody
         ).create();
     }
 }

@@ -6,7 +6,6 @@ public class OrderItem {
     private int quantity;
     private double price;
 
-    // Constructors
     public OrderItem() {
     }
 
@@ -17,7 +16,6 @@ public class OrderItem {
         this.price = price;
     }
 
-    // Getters and Setters
     public String getProductId() {
         return productId;
     }

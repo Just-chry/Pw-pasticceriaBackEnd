@@ -17,10 +17,9 @@ public class UserSession {
     private User user;
 
     public UserSession() {
-        this.sessionId = UUID.randomUUID().toString(); // Genera automaticamente un UUID per la sessione
+        this.sessionId = UUID.randomUUID().toString();
     }
 
-    // Getter e Setter
     public String getSessionId() {
         return sessionId;
     }

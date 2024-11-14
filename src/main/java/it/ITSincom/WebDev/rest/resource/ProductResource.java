@@ -5,8 +5,6 @@ import it.ITSincom.WebDev.rest.model.ProductAdminResponse;
 import it.ITSincom.WebDev.rest.model.ProductResponse;
 import it.ITSincom.WebDev.service.ProductService;
 import it.ITSincom.WebDev.service.AuthenticationService;
-import it.ITSincom.WebDev.service.exception.ProductNotFoundException;
-import it.ITSincom.WebDev.service.exception.UnauthorizedAccessException;
 import it.ITSincom.WebDev.service.exception.UserSessionNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -74,7 +72,6 @@ public class ProductResource {
     @POST
     @Path("/add")
     public Response addProduct(@CookieParam("sessionId") String sessionId, Product productReq) throws UserSessionNotFoundException {
-        // Controllo se l'utente è admin
         authenticationService.isAdmin(sessionId);
 
         try {

@@ -75,23 +75,15 @@ public class ProductService {
 
     @Transactional
     public void addProduct(Product product) throws IOException {
-        // Se l'immagine è in formato Base64, la salviamo
         String base64Image = product.getImage();
         if (base64Image != null && !base64Image.isEmpty()) {
-            // Genero un nome univoco per l'immagine usando il nome del prodotto
             String fileName = product.getName().replaceAll("\\s+", "_") + ".png";
 
-            // Salvo l'immagine nel filesystem
             saveImage(base64Image, fileName);
 
-            // Imposto il percorso dell'immagine nel prodotto
-            product.setImage("/images/" + fileName); // Puoi usare un percorso relativo per una migliore portabilità
+            product.setImage("/images/" + fileName);
         }
-
-        // Valida i campi del prodotto
         validateProductInput(product);
-
-        // Persisti il prodotto nel repository
         productRepository.persist(product);
 
         if (product.getIngredientNames() != null && !product.getIngredientNames().isEmpty()) {
@@ -100,17 +92,13 @@ public class ProductService {
     }
 
     private void saveImage(String base64Image, String fileName) throws IOException {
-        // Rimuovo la parte "data:image/png;base64," se presente
         String[] parts = base64Image.split(",");
         String imageData = parts.length > 1 ? parts[1] : parts[0];
 
-        // Decodifico l'immagine in byte[]
         byte[] imageBytes = Base64.getDecoder().decode(imageData);
 
-        // Percorso di salvataggio
         Path path = Paths.get("C:\\Users\\JiaHaoChristianChen\\PW-Pasticceria\\front-end/public/images/" + fileName);
 
-        // Salvo l'immagine nel percorso specificato
         try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
             fos.write(imageBytes);
         }
@@ -121,7 +109,7 @@ public class ProductService {
     public void addProducts(List<Product> products) {
         for (Product product : products) {
             if (product.getIsVisible() == null) {
-                product.setIsVisible(true); // Imposta isVisible a true se non è stato fornito
+                product.setIsVisible(true);
             }
             validateProductInput(product);
             productRepository.persist(product);
@@ -133,7 +121,6 @@ public class ProductService {
     public void deleteProduct(String productId) {
         Product product = getProductByIdOrThrow(productId);
 
-        // Cancella l'immagine associata, se esiste
         String imagePath = "C:\\Users\\JiaHaoChristianChen\\PW-Pasticceria\\front-end/public" + product.getImage();
         File imageFile = new File(imagePath);
         if (imageFile.exists()) {
@@ -146,7 +133,6 @@ public class ProductService {
             System.out.println("Immagine non trovata: " + imagePath);
         }
 
-        // Cancella il prodotto dal repository
         productRepository.delete(product);
     }
 
@@ -171,10 +157,9 @@ public class ProductService {
     public void modifyProduct(String productId, Product updatedProduct) {
         Product product = getProductByIdOrThrow(productId);
 
-        // Aggiungi un log per verificare il valore di isVisible
         System.out.println("Valore ricevuto per isVisible: " + updatedProduct.getIsVisible());
 
-        validateProductInput(updatedProduct); // Potresti adattare questo metodo per la modifica
+        validateProductInput(updatedProduct);
         updateProductDetails(product, updatedProduct);
         if (updatedProduct.getIngredientNames() != null) {
             updateProductIngredients(product, updatedProduct.getIngredientNames());
@@ -185,26 +170,21 @@ public class ProductService {
 
     @Transactional
     public void updateProductIngredients(Product product, List<String> newIngredients) {
-        // Step 1: Retrieve current ingredients from the product
         List<String> currentIngredients = productRepository.findIngredientNamesByProductId(product.getId());
 
-        // Step 2: Determine ingredients to add
         List<String> ingredientsToAdd = newIngredients.stream()
                 .filter(ingredient -> !currentIngredients.contains(ingredient))
                 .collect(Collectors.toList());
 
-        // Step 3: Determine ingredients to remove
         List<String> ingredientsToRemove = currentIngredients.stream()
                 .filter(ingredient -> !newIngredients.contains(ingredient))
                 .collect(Collectors.toList());
 
-        // Step 4: Add new ingredients if they don't exist
         for (String ingredientName : ingredientsToAdd) {
             Ingredient ingredient = getOrCreateIngredientByName(ingredientName);
             productRepository.addIngredientToProduct(product.getId(), ingredient.getId());
         }
 
-        // Step 5: Remove ingredients that are no longer needed
         for (String ingredientName : ingredientsToRemove) {
             Ingredient ingredient = ingredientRepository.find("name", ingredientName).firstResult();
             if (ingredient != null) {
@@ -280,12 +260,11 @@ public class ProductService {
 
 
     public List<ProductAdminResponse> getProductsByCategoryForAdmin(String category) {
-        // Recupera tutti i prodotti appartenenti alla categoria specificata, con dettagli amministrativi.
+
         List<Product> products = productRepository.findByCategory(category);
         List<ProductAdminResponse> productAdminResponses = new ArrayList<>();
 
         for (Product product : products) {
-            // Recupera gli ingredienti per ciascun prodotto
             List<String> ingredientNames = productRepository.findIngredientNamesByProductId(product.getId());
 
             ProductAdminResponse response = new ProductAdminResponse(
@@ -295,7 +274,7 @@ public class ProductService {
                     product.getImage(),
                     product.getPrice(),
                     product.getCategory().name(),
-                    ingredientNames, // Passa gli ingredienti recuperati qui
+                    ingredientNames,
                     product.getQuantity(),
                     product.getIsVisible()
             );
@@ -311,14 +290,12 @@ public class ProductService {
                 .filter(product -> product.getCategory().name().equalsIgnoreCase(category))
                 .collect(Collectors.toList());
 
-        // Verifica se i prodotti sono stati trovati
         if (products.isEmpty()) {
             throw new ProductNotFoundException("Nessun prodotto trovato per la categoria: " + category);
         }
 
         List<ProductResponse> productResponses = new ArrayList<>();
         for (Product product : products) {
-            // Recupera gli ingredienti per ciascun prodotto
             List<String> ingredientNames = productRepository.findIngredientNamesByProductId(product.getId());
 
             ProductResponse response = new ProductResponse(
@@ -328,7 +305,7 @@ public class ProductService {
                     product.getImage(),
                     product.getPrice(),
                     product.getCategory().name(),
-                    ingredientNames,  // Passa gli ingredienti qui
+                    ingredientNames,
                     product.getQuantity());
             productResponses.add(response);
         }
@@ -340,7 +317,6 @@ public class ProductService {
     public ProductResponse getProductById(String productId) {
         Product product = getProductByIdOrThrow(productId);
 
-        // Recupera gli ingredienti per il prodotto specifico
         List<String> ingredientNames = productRepository.findIngredientNamesByProductId(product.getId());
 
         return new ProductResponse(
@@ -350,7 +326,7 @@ public class ProductService {
                 product.getImage(),
                 product.getPrice(),
                 product.getCategory().name(),
-                ingredientNames,  // Passa gli ingredienti recuperati qui
+                ingredientNames,
                 product.getQuantity());
     }
 

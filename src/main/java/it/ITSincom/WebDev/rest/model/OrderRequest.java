@@ -5,12 +5,11 @@ import java.time.LocalTime;
 import java.util.List;
 
 public class OrderRequest {
-    private LocalDate pickupDate;  // Data di ritiro come LocalDate
-    private LocalTime pickupTime;  // Orario di ritiro come LocalTime
+    private LocalDate pickupDate;
+    private LocalTime pickupTime;
     private String comments;
     private List<OrderItemRequest> products;
 
-    // Getters e Setters
     public LocalDate getPickupDate() {
         return pickupDate;
     }

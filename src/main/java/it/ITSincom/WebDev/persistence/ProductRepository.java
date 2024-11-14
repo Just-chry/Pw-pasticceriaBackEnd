@@ -1,7 +1,6 @@
 package it.ITSincom.WebDev.persistence;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import it.ITSincom.WebDev.persistence.model.Ingredient;
 import it.ITSincom.WebDev.persistence.model.Product;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -41,8 +40,6 @@ public class ProductRepository implements PanacheRepositoryBase<Product, String>
     }
 
     public List<Product> findByCategory(String category) {
-        // Recupera tutti i prodotti appartenenti alla categoria specificata.
-        // Questo metodo dovrebbe fare una query al database per ottenere i prodotti.
         return findAll().stream()
                 .filter(product -> product.getCategory().name().equalsIgnoreCase(category))
                 .collect(Collectors.toList());

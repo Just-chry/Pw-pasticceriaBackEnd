@@ -3,16 +3,13 @@ package it.ITSincom.WebDev.rest.model;
 public class LoginResponse {
     private String message;
     private String name;
-    private String sessionId; // Aggiungi il sessionId
+    private String sessionId;
 
-    // Costruttore aggiornato
     public LoginResponse(String message, String name, String sessionId) {
         this.message = message;
         this.name = name;
         this.sessionId = sessionId;
     }
-
-    // Getter e Setter
     public String getMessage() {
         return message;
     }

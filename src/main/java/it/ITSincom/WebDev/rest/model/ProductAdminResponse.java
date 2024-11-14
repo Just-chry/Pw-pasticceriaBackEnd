@@ -3,10 +3,9 @@ package it.ITSincom.WebDev.rest.model;
 import java.util.List;
 
 public class ProductAdminResponse extends ProductResponse {
-    private Integer quantity; // Quantità visibile solo per admin
-    private Boolean is_visible; // Visibilità del prodotto
+    private Integer quantity;
+    private Boolean is_visible;
 
-    // Costruttore con `id` e `quantity`
     public ProductAdminResponse(String id, String name, String description, String image, Double price, String category, List<String> ingredients, Integer quantity, Boolean is_visible) {
         super(id,name, description, image, price, category, ingredients, quantity);
         this.quantity = quantity;

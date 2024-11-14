@@ -43,10 +43,6 @@ public class ProfileService {
                         "<a href=\"" + verificationLink + "\">Verifica la tua email</a>"));
     }
 
-    public void updatePhone(User user, String newPhone) {
-        user.setPhone(newPhone);
-    }
-
     public void updatePassword(User user, String oldPassword, String newPassword, AuthenticationService authService) {
         String hashedOldPassword = authService.hashPassword(oldPassword);
         if (!authService.verifyPassword(user.getPassword(), hashedOldPassword)) {

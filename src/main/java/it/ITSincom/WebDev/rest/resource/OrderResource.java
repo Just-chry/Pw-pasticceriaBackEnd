@@ -14,16 +14,12 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 
 @Path("/orders")
@@ -104,14 +100,8 @@ public class OrderResource {
     public Response deleteOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
         try {
             validateSessionAndGetUser(sessionId);
-
-            // Recupera l'ordine PRIMA di cancellarlo per inviare la notifica
             Order order = orderService.getOrder(orderId);
-
-            // Invia la notifica di cancellazione dell'ordine
             notificationService.sendOrderCancelledNotificationToAdmin(order);
-
-            // Cancella l'ordine
             orderService.deleteOrder(sessionId, orderId);
 
             return Response.ok("Ordine cancellato con successo.").build();
@@ -151,16 +141,9 @@ public class OrderResource {
     @Path("/day/{date}")
     public Response getOrdersByDay(@CookieParam("sessionId") String sessionId, @PathParam("date") String date) {
         try {
-            // Validate if the user has admin privileges
             authenticationService.isAdmin(sessionId);
-
-            // Trim any extra spaces from the date string
             String trimmedDate = date.trim();
-
-            // Parse the date from the path parameter
             LocalDate parsedDate = LocalDate.parse(trimmedDate, DateTimeFormatter.ISO_LOCAL_DATE);
-
-            // Retrieve orders by the given date from the service
             List<Order> orders = orderService.getOrdersByDay(parsedDate);
 
             return Response.ok(orders).build();
@@ -173,11 +156,9 @@ public class OrderResource {
 
 
     private User validateSessionAndGetUser(String sessionId) throws UserSessionNotFoundException {
-        // Recupera la UserSession e l'utente
         UserSession userSession = authenticationService.findUserSessionBySessionId(sessionId);
         User user = (userSession != null) ? userSession.getUser() : null;
 
-        // Esegui la validazione della sessione e dell'utente
         Validation.validateSessionAndUser(sessionId, userSession, user);
 
         return user;
@@ -204,22 +185,12 @@ public class OrderResource {
     @Path("/reject/{orderId}")
     public Response rejectOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
         try {
-            // Verifica se l'utente è un amministratore
             authenticationService.isAdmin(sessionId);
-
-            // Rifiuta l'ordine usando il servizio OrderService
             orderService.rejectOrder(orderId);
-
-            // Recupera l'utente associato all'ordine
             User user = orderService.getUserByOrderId(orderId);
-
-            // Invia una notifica all'utente che l'ordine è stato rifiutato
             notificationService.sendOrderRejectedNotification(user, orderId);
-
-            // Restituisci una risposta di successo
             return Response.ok("Ordine rifiutato con successo e notifica inviata.").build();
         } catch (Exception e) {
-            // Gestione dell'eccezione
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }

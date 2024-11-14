@@ -40,7 +40,7 @@ public class CreateUserRequest {
                 throw new ValidationException("Email non valida");
             }
         } else {
-            this.email = null; // Imposta email a null se è una stringa vuota
+            this.email = null;
         }
     }
 
@@ -50,7 +50,6 @@ public class CreateUserRequest {
 
     public void setPhone(String phone) throws ValidationException {
         if (phone != null && !phone.trim().isEmpty()) {
-            // Aggiungi il prefisso +39 se non è già presente
             if (!phone.startsWith("+39")) {
                 phone = "+39" + phone;
             }
@@ -61,12 +60,9 @@ public class CreateUserRequest {
                 throw new ValidationException("Numero di telefono non valido");
             }
         } else {
-            this.phone = null; // Imposta il telefono a null se è una stringa vuota
+            this.phone = null;
         }
     }
-
-
-
 
     public boolean hasValidNameAndSurname() {
         return name != null && !name.trim().isEmpty() &&
@@ -76,8 +72,5 @@ public class CreateUserRequest {
     public boolean hasValidContact() {
         return (email != null && !email.trim().isEmpty()) || (phone != null && !phone.trim().isEmpty());
     }
-
-
-
 
 }

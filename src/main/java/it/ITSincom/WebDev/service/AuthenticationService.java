@@ -44,7 +44,6 @@ public class AuthenticationService {
 
     @Transactional
     public User register(CreateUserRequest request) throws UserCreationException {
-        // Prima validazione della richiesta
         Validation.validateUserRequest(request);
         checkIfEmailOrPhoneExists(request);
 
@@ -54,12 +53,10 @@ public class AuthenticationService {
         user.setSurname(request.getSurname());
         user.setPassword(hashPassword(request.getPassword()));
         user.setEmail(request.getEmail());
-        // Imposta il telefono solo se non è vuoto
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             user.setPhone(request.getPhone());
         }
 
-        // Genera token di verifica solo se i contatti sono validi
         if (user.getEmail() != null && !user.getEmail().isEmpty()) {
             user.setVerificationTokenEmail(UUID.randomUUID().toString());
         } else if (user.getPhone() != null && !user.getPhone().isEmpty()) {
@@ -107,21 +104,15 @@ public class AuthenticationService {
 
     @Transactional
     public LoginResponse handleLogin(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
-        // Validazione della richiesta
-        System.out.println("LoginRequest Email or Phone: " + request.getEmailOrPhone());
-        System.out.println("LoginRequest Password: " + request.getPassword());
-
         Validation.validateLoginRequest(request);
 
         Optional<User> optionalUser = userRepository.findUserByEmailOrPhone(request.getEmailOrPhone());
         User user = optionalUser.orElseThrow(() -> new UserNotFoundException("Utente non trovato."));
 
-        // Controlla se l'utente ha verificato almeno un contatto
         if (!user.getEmailVerified() && !user.getPhoneVerified()) {
             throw new UnauthorizedAccessException("Contatto non verificato. Per favore, verifica il tuo indirizzo email o il tuo numero di telefono.");
         }
 
-        // Verifica della password
         String hashedProvidedPassword = hashPassword(request.getPassword());
         if (!verifyPassword(user.getPassword(), hashedProvidedPassword)) {
             throw new WrongPasswordException("Password errata.");
@@ -129,7 +120,6 @@ public class AuthenticationService {
 
         checkIfSessionExists(user.getId());
 
-        // Crea una nuova sessione
         String sessionId = createSession(user);
         return new LoginResponse("Login avvenuto con successo", user.getName(), sessionId);
     }
@@ -164,7 +154,6 @@ public class AuthenticationService {
             }
         }
 
-        // Verifica solo se phone non è vuoto o null
         if (phone != null && !phone.trim().isEmpty()) {
             boolean phoneInUse = userRepository.findByPhone(phone).isPresent();
             if (phoneInUse) {
@@ -172,10 +161,6 @@ public class AuthenticationService {
             }
         }
     }
-
-
-
-
 
     private String createSession(User user) {
         String sessionId = UUID.randomUUID().toString();
@@ -240,11 +225,10 @@ public class AuthenticationService {
     }
 
     public List<UserResponse> getAllUserResponses() {
-        List<User> users = getAllUsers(); // Ottieni tutti gli utenti
+        List<User> users = getAllUsers();
         List<UserResponse> userResponses = new ArrayList<>();
 
         for (User user : users) {
-            // Converte ogni User in un UserResponse
             UserResponse response = new UserResponse(
                     user.getName(),
                     user.getSurname(),
@@ -263,13 +247,9 @@ public class AuthenticationService {
 
     public User getUserBySessionId(String sessionId) throws UserSessionNotFoundException {
         UserSession session = findUserSessionBySessionId(sessionId);
-
         if (session == null) {
-            // Se la sessione non è trovata, lancia un'eccezione
             throw new UserSessionNotFoundException("Sessione non trovata");
         }
-
-        // Restituisce l'utente associato alla sessione
         return session.getUser();
     }
     public User getUserById(String userId) throws UserNotFoundException {
