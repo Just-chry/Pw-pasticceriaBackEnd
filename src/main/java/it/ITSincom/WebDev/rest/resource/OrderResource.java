@@ -80,6 +80,7 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
+
     @GET
     @Path("/cart")
     public Response getCartByUser(@CookieParam("sessionId") String sessionId) {

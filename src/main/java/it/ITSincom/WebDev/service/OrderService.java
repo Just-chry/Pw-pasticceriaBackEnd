@@ -114,16 +114,10 @@ public class OrderService {
             items.add(newItem);
         }
 
-        // Update product quantity in inventory
-        product.setQuantity(product.getQuantity() - newItem.getQuantity());
-        productRepository.persist(product);
-
         // Update the cart
         cart.setProducts(items);
         orderRepository.update(cart);
     }
-
-
 
     @Transactional
     public Order createOrderFromCart(String sessionId, OrderRequest orderRequest) throws Exception {
@@ -136,6 +130,20 @@ public class OrderService {
             throw new Exception("Il carrello è vuoto. Aggiungi prodotti prima di creare un ordine.");
         }
 
+        Order cart = optionalCart.get();
+
+        // Check if all product quantities are available
+        for (OrderItem item : cart.getProducts()) {
+            Optional<Product> productOptional = productRepository.findByIdOptional(item.getProductId());
+            if (productOptional.isPresent()) {
+                Product product = productOptional.get();
+                if (product.getQuantity() < item.getQuantity()) {
+                    throw new Exception("Prodotti insufficienti per il prodotto: " + product.getName() + " Quantità di prodotti rimanenti: " + product.getQuantity());
+                }
+            } else {
+                throw new Exception("Prodotto non trovato per l'ID: " + item.getProductId());
+            }
+        }
 
         LocalDateTime pickupDateTime = LocalDateTime.of(orderRequest.getPickupDate(), orderRequest.getPickupTime());
         if (pickupDateTime.getDayOfWeek() == DayOfWeek.MONDAY) {
@@ -145,10 +153,21 @@ public class OrderService {
             throw new Exception("La fascia oraria selezionata non è disponibile. Gli ordini possono essere fatti solo ogni 10 minuti dalle 9:00 alle 13:00 e dalle 15:00 alle 19:00.");
         }
 
-        Order cart = optionalCart.get();
         Order order = new Order(userId, pickupDateTime, orderRequest.getComments(), cart.getProducts(), "pending");
         orderRepository.persist(order);
         System.out.println("Ordine creato: ID = " + order.getId() + ", UserID = " + order.getUserId());
+
+        // Decrease product quantities after the order is confirmed
+        for (OrderItem item : cart.getProducts()) {
+            Optional<Product> productOptional = productRepository.findByIdOptional(item.getProductId());
+            if (productOptional.isPresent()) {
+                Product product = productOptional.get();
+                product.setQuantity(product.getQuantity() - item.getQuantity());
+                productRepository.persist(product);
+            } else {
+                throw new Exception("Prodotto non trovato per l'ID: " + item.getProductId());
+            }
+        }
 
         // Clear the cart after order is created by deleting it
         orderRepository.delete(cart);
