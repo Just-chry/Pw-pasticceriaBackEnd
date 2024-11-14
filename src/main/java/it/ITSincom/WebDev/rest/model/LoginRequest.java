@@ -9,8 +9,15 @@ public class LoginRequest {
     }
 
     public void setEmailOrPhone(String emailOrPhone) {
+        if (emailOrPhone != null && !emailOrPhone.trim().isEmpty() && emailOrPhone.matches("\\d+")) {
+            // Se è un numero di telefono e non contiene il prefisso, aggiungi +39
+            if (!emailOrPhone.startsWith("+39")) {
+                emailOrPhone = "+39" + emailOrPhone;
+            }
+        }
         this.emailOrPhone = emailOrPhone;
     }
+
 
     public String getPassword() {
         return password;

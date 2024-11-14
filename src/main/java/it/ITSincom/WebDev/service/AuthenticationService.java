@@ -108,6 +108,9 @@ public class AuthenticationService {
     @Transactional
     public LoginResponse handleLogin(LoginRequest request) throws UserNotFoundException, WrongPasswordException, SessionAlreadyExistsException {
         // Validazione della richiesta
+        System.out.println("LoginRequest Email or Phone: " + request.getEmailOrPhone());
+        System.out.println("LoginRequest Password: " + request.getPassword());
+
         Validation.validateLoginRequest(request);
 
         Optional<User> optionalUser = userRepository.findUserByEmailOrPhone(request.getEmailOrPhone());

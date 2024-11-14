@@ -67,6 +67,7 @@ public class CreateUserRequest {
 
 
 
+
     public boolean hasValidNameAndSurname() {
         return name != null && !name.trim().isEmpty() &&
                 surname != null && !surname.trim().isEmpty();
