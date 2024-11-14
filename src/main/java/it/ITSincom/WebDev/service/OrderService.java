@@ -9,6 +9,7 @@ import it.ITSincom.WebDev.rest.model.OrderItemRequest;
 import it.ITSincom.WebDev.rest.model.OrderRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.bson.types.ObjectId;
 
@@ -16,7 +17,9 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class OrderService {
@@ -25,13 +28,15 @@ public class OrderService {
     private final UserSessionRepository userSessionRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final EntityManager entityManager;
 
     @Inject
-    public OrderService(OrderRepository orderRepository, UserSessionRepository userSessionRepository, ProductRepository productRepository, UserRepository userRepository) {
+    public OrderService(OrderRepository orderRepository, UserSessionRepository userSessionRepository, ProductRepository productRepository, UserRepository userRepository, EntityManager entityManager) {
         this.orderRepository = orderRepository;
         this.userSessionRepository = userSessionRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.entityManager = entityManager;
     }
 
     public List<Order> getUserOrders(String sessionId) throws Exception {
@@ -380,4 +385,44 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public List<Order> getOrdersByDate(LocalDate pickupDate) {
+        return orderRepository.findByPickupDate(pickupDate);
+    }
+
+    // Metodo per ottenere tutti gli slot orari disponibili (e.g., ogni 10 minuti dalle 9 alle 13 e dalle 15 alle 19)
+    public List<LocalTime> getAllPossibleSlots() {
+        List<LocalTime> allSlots = new ArrayList<>();
+
+        // Slot mattutini: dalle 9:00 alle 13:00
+        LocalTime current = LocalTime.of(9, 0);
+        LocalTime morningEnd = LocalTime.of(13, 0);
+        while (current.isBefore(morningEnd)) {
+            allSlots.add(current);
+            current = current.plusMinutes(10);
+        }
+
+        // Slot pomeridiani: dalle 15:00 alle 19:00
+        current = LocalTime.of(15, 0);
+        LocalTime eveningEnd = LocalTime.of(19, 0);
+        while (current.isBefore(eveningEnd)) {
+            allSlots.add(current);
+            current = current.plusMinutes(10);
+        }
+
+        return allSlots;
+    }
+
+    public List<LocalTime> getAvailableSlots(LocalDate pickupDate) {
+        List<Order> existingOrders = getOrdersByDate(pickupDate);
+        List<LocalTime> allSlots = getAllPossibleSlots();
+
+        // Rimuovi gli orari già prenotati dalla lista degli orari disponibili
+        List<LocalTime> availableSlots = allSlots.stream()
+                .filter(slot -> existingOrders.stream().noneMatch(order ->
+                        order.getPickupDateTime().toLocalDate().equals(pickupDate) && // Filtra sulla data
+                                order.getPickupDateTime().toLocalTime().equals(slot))) // Filtra sull'orario
+                .collect(Collectors.toList());
+
+        return availableSlots;
+    }
 }

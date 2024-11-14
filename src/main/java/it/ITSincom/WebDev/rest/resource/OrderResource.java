@@ -15,9 +15,15 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Path("/orders")
@@ -93,8 +99,6 @@ public class OrderResource {
     }
 
 
-
-
     @DELETE
     @Path("/cancel/{orderId}")
     public Response deleteOrder(@CookieParam("sessionId") String sessionId, @PathParam("orderId") String orderId) {
@@ -117,7 +121,6 @@ public class OrderResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
-
 
 
     @GET
@@ -143,6 +146,7 @@ public class OrderResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
+
     @GET
     @Path("/day/{date}")
     public Response getOrdersByDay(@CookieParam("sessionId") String sessionId, @PathParam("date") String date) {
@@ -238,6 +242,31 @@ public class OrderResource {
         }
     }
 
+    @GET
+    @Path("/available-slots")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAvailableSlots(@QueryParam("date") String date) {
+        try {
+            LocalDate selectedDate = LocalDate.parse(date);
+            List<LocalTime> availableSlots = orderService.getAvailableSlots(selectedDate);
 
+            return Response.ok(availableSlots).build();
+        } catch (DateTimeParseException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Formato della data non valido. Utilizza il formato YYYY-MM-DD.")
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Errore durante il recupero degli slot disponibili. Riprova più tardi.")
+                    .build();
+        }
+    }
 
 }
+
+
+
+
+
+
+
