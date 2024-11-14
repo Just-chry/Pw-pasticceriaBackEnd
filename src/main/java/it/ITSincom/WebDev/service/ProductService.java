@@ -117,7 +117,6 @@ public class ProductService {
     }
 
 
-
     @Transactional
     public void addProducts(List<Product> products) {
         for (Product product : products) {
@@ -171,12 +170,18 @@ public class ProductService {
     @Transactional
     public void modifyProduct(String productId, Product updatedProduct) {
         Product product = getProductByIdOrThrow(productId);
+
+        // Aggiungi un log per verificare il valore di isVisible
+        System.out.println("Valore ricevuto per isVisible: " + updatedProduct.getIsVisible());
+
         validateProductInput(updatedProduct); // Potresti adattare questo metodo per la modifica
         updateProductDetails(product, updatedProduct);
         if (updatedProduct.getIngredientNames() != null) {
             updateProductIngredients(product, updatedProduct.getIngredientNames());
         }
+
     }
+
 
     @Transactional
     public void updateProductIngredients(Product product, List<String> newIngredients) {
@@ -265,9 +270,9 @@ public class ProductService {
         if (updatedProduct.getQuantity() != null) {
             product.setQuantity(updatedProduct.getQuantity());
         }
-        if (updatedProduct.getIsVisible() != null) {
-            product.setIsVisible(updatedProduct.getIsVisible());
-        }
+        System.out.println("Updating visibility to: " + updatedProduct.getIsVisible());
+        product.setIsVisible(updatedProduct.getIsVisible());
+
         if (updatedProduct.getCategory() != null) {
             product.setCategory(updatedProduct.getCategory());
         }
@@ -302,14 +307,13 @@ public class ProductService {
 
 
     public List<ProductResponse> getProductsByCategoryForUser(String category) {
-        System.out.println("Categoria richiesta: " + category);  // Aggiungi questo per verificare il valore
         List<Product> products = productRepository.findVisibleProducts().stream()
                 .filter(product -> product.getCategory().name().equalsIgnoreCase(category))
                 .collect(Collectors.toList());
 
         // Verifica se i prodotti sono stati trovati
         if (products.isEmpty()) {
-            System.out.println("Nessun prodotto trovato per la categoria: " + category);
+            throw new ProductNotFoundException("Nessun prodotto trovato per la categoria: " + category);
         }
 
         List<ProductResponse> productResponses = new ArrayList<>();
@@ -331,7 +335,6 @@ public class ProductService {
 
         return productResponses;
     }
-
 
 
     public ProductResponse getProductById(String productId) {
