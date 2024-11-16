@@ -233,17 +233,20 @@ public class AuthenticationService {
         }
     }
 
-    public List<UserResponse> getAllUserResponses() {
+    public List<ExtendedUserResponse> getAllUserResponses() {
         List<User> users = getAllUsers();
-        List<UserResponse> userResponses = new ArrayList<>();
+        List<ExtendedUserResponse> userResponses = new ArrayList<>();
 
         for (User user : users) {
-            UserResponse response = new UserResponse(
+            ExtendedUserResponse response = new ExtendedUserResponse(
+                    user.getId(),  // Aggiungi l'ID dell'utente
                     user.getName(),
                     user.getSurname(),
                     user.getEmail(),
                     user.getPhone(),
-                    user.getRole()
+                    user.getRole(),
+                    user.getEmailVerified(),
+                    user.getPhoneVerified()
             );
             userResponses.add(response);
         }
@@ -349,6 +352,14 @@ public class AuthenticationService {
 
         userRepository.getEntityManager().merge(user);
         return Response.ok("Password resettata con successo!").build();
+    }
+
+    @Transactional
+    public void updateUser(User user) {
+        if (user.getId() == null) {
+            throw new IllegalArgumentException("L'utente deve avere un ID per essere aggiornato.");
+        }
+        userRepository.getEntityManager().merge(user);
     }
 
 }

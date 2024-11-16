@@ -1,6 +1,7 @@
 package it.ITSincom.WebDev.rest.resource;
 
 import it.ITSincom.WebDev.persistence.model.User;
+import it.ITSincom.WebDev.rest.model.ExtendedUserResponse;
 import it.ITSincom.WebDev.rest.model.UserResponse;
 import it.ITSincom.WebDev.service.AuthenticationService;
 import it.ITSincom.WebDev.service.exception.UserNotFoundException;
@@ -34,7 +35,7 @@ public class UserResource {
     public Response getAllUsers(@CookieParam("sessionId") String sessionId) {
         try {
             authenticationService.isAdmin(sessionId);
-            List<UserResponse> userResponses = authenticationService.getAllUserResponses();
+            List<ExtendedUserResponse> userResponses = authenticationService.getAllUserResponses();
             return Response.ok(userResponses).build();
         } catch (UserSessionNotFoundException e) {
             return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
@@ -58,5 +59,37 @@ public class UserResource {
 
         return Response.ok(userResponse).build();
     }
+
+    @POST
+    @Path("/verify/{userId}")
+    public Response verifyUserField(@PathParam("userId") String userId, @QueryParam("field") String field) {
+        try {
+            User user = authenticationService.getUserById(userId);
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Utente non trovato").build();
+            }
+
+            switch (field.toLowerCase()) {
+                case "email":
+                    user.setEmailVerified(true);
+                    break;
+                case "phone":
+                    user.setPhoneVerified(true);
+                    break;
+                default:
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Campo di verifica non valido").build();
+            }
+
+            // Salva le modifiche nel database
+            authenticationService.updateUser(user);
+
+            return Response.ok("Utente verificato con successo").build();
+        } catch (UserNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Utente non trovato").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Errore interno del server").build();
+        }
+    }
+
 
 }
